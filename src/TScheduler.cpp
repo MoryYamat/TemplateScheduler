@@ -9,17 +9,25 @@ int main()
 {
     using namespace tsr;
 
-    std::cerr << "\n====== Resolve Dependencies in the specified order ======\n";
-
-    // ResolveOrder<Ontology_PysGraph, ResolverDirection::RootFirst>::Resolve();
-    // ResolveOrder<Ontology_PysGraph, ResolverDirection::LeafFirst>::Resolve();
-
-    NodeResolver<Ontology_PysGraph>::Resolve();
+    std::cerr << "\n====== Ontology ========\n";
+    ResolveOrder<Ontology_PysGraph>::Resolve();
 
     std::cerr << "\n====== Task Dependency ========\n";
-    NodeResolver<TaskDepndency_PysGraph>::Resolve();
+    ResolveOrder<TaskDepndency_PysGraph>::Resolve();
 
-    using ForceCheck = typename Ontology_PysGraph::element_types;
+
+    // 
+    std::cerr << "\n====== Resolve Dependencies in the specified order ======\n";
+
+    std::cerr << "======= Root First ======= \n";
+    ResolveOrder<Ontology_PysGraph, ResolverDirection::RootFirst>::Resolve();
+
+    
+    std::cerr << "======= Leaf First ======= \n";
+    ResolveOrder<Ontology_PysGraph, ResolverDirection::LeafFirst>::Resolve();
+
+    // Type Force Checker
+    // using ForceCheck = typename Ontology_PysGraph::element_types;
     return 0;
 }
 

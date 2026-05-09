@@ -10,14 +10,18 @@ namespace tsr
 
     inline constexpr int indent_width = 2;
 
-    // ==================== minimum structure ====================
+    // Node<T>      // 外部型を包む
+    // Arc<R, B...> // R <- B... の関係
+    // Graph<Tag, Elements...>
+    // ============================================================== DESCRPT ==============================================================
+    // ============================================================== DESCRPT ==============================================================
     template <typename T>
     struct Node
     {
         using basic_type = T;
     };
 
-    // *************** type traits ***************
+    // *********************** type traits ***********************
     template <typename T>
     struct IsNode : std::false_type
     {
@@ -28,8 +32,9 @@ namespace tsr
     };
     template <typename T>
     concept NodeType = IsNode<T>::value;
-    // *******************************************
+    // ***********************************************************
 
+    // ###################### TYPE ######################
     template <NodeType... Nodes>
     struct NodePack
     {
@@ -52,8 +57,9 @@ namespace tsr
         using root_node = RootNodeT;
         using branches = ElementPack<BranchTs...>;
     };
+    // ##################################################
 
-    // *************** type traits ***************
+    // *********************** type traits ***********************
     template <typename T>
     struct IsElement : std::false_type
     {
@@ -87,9 +93,10 @@ namespace tsr
     {
     }; // check if BranchTs are Node<T>
     //
-    // *******************************************
+    // ***********************************************************
 
-    template <typename Tag, typename... ElementTs>
+    // ###################### TYPE ######################
+    template <typename Tag, ElementType... ElementTs>
     struct Graph
     {
         static_assert((IsElement<ElementTs>::value && ...), "Graph elements must be Node<T> or Arc<Node<T>, ...>");
@@ -99,9 +106,13 @@ namespace tsr
 
         using tag_type = Tag;
         using element_types = ElementPack<ElementTs...>;
-    };
 
-    // ============================================================
+    };
+    // ##################################################
+    // ==========================================================================================================================================================================================================================================================================
+
+    // ============================================================== COMPILER ==============================================================
+    // ============================================================== COMPILER ==============================================================
 
     // =================== Scanning policy ========================
     enum class ResolverDirection : std::uint32_t
@@ -109,28 +120,12 @@ namespace tsr
         RootFirst,
         LeafFirst
     };
+
     // ======================== Resolver ==========================
-    template <typename Graph, ResolverDirection Direction>
-    struct ResolveOrder;
-
-    template <typename Tag, typename... dependencies, ResolverDirection Direction>
-    struct ResolveOrder<Graph<Tag, dependencies...>, Direction>
-    {
-        static void Resolve()
-        {
-            if constexpr (Direction == ResolverDirection::RootFirst)
-            {
-                std::cerr << "RootFirst\n";
-            }
-            else
-            {
-                std::cerr << "LeafFirst\n";
-            }
-        }
-    };
-
     // TEST
-    template <typename T>
+    // UNIT
+
+    template <typename T, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct NodeResolver
     {
         static void Resolve()
@@ -138,8 +133,8 @@ namespace tsr
             std::cerr << "Type = " << typeid(T).name() << "\n";
         }
     };
-    template <typename T>
-    struct NodeResolver<Node<T>>
+    template <typename T, ResolverDirection Direction>
+    struct NodeResolver<Node<T>, Direction>
     {
         static void Resolve()
         {
@@ -147,25 +142,76 @@ namespace tsr
         }
     };
 
-    template <typename N, typename... Dependencies>
-    struct NodeResolver<Arc<N, Dependencies...>>
+    template <typename Root, typename... ElementTs, ResolverDirection Direction>
+    struct NodeResolver<Arc<Root, ElementTs...>, Direction>
     {
         static void Resolve()
         {
-            NodeResolver<N>::Resolve();
-            ((NodeResolver<Dependencies>::Resolve()), ...);
+            if constexpr (Direction == ResolverDirection::RootFirst)
+            {
+                NodeResolver<Root, ResolverDirection::RootFirst>::Resolve();
+                ((NodeResolver<ElementTs, ResolverDirection::RootFirst>::Resolve()), ...);
+            }
+            else
+            {
+                ((NodeResolver<ElementTs, ResolverDirection::LeafFirst>::Resolve()), ...);
+                NodeResolver<Root, ResolverDirection::LeafFirst>::Resolve();
+            }
         }
     };
 
-    template <typename Tag, typename... Dependencies>
-    struct NodeResolver<Graph<Tag, Dependencies...>>
+    template <typename Tag, typename... ElementTs, ResolverDirection Direction>
+    struct NodeResolver<Graph<Tag, ElementTs...>, Direction>
     {
         static void Resolve()
         {
-            NodeResolver<Tag>::Resolve();
-            ((NodeResolver<Dependencies>::Resolve()), ...);
+            NodeResolver<Tag, Direction>::Resolve();
+            ((NodeResolver<ElementTs, Direction>::Resolve()), ...);
         }
     };
+    // UNIT
+
+    template <typename Graph, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct ResolveOrder;
+
+    template <typename Tag, ElementType... ElementTs, ResolverDirection Direction>
+    struct ResolveOrder<Graph<Tag, ElementTs...>, Direction>
+    {
+        static void Resolve()
+        {
+            if constexpr (Direction == ResolverDirection::RootFirst)
+            {
+                std::cerr << "RootFirst\n";
+                {
+                    // NodeResolver<Tag, ResolverDirection::RootFirst>::Resolve();
+                    ((NodeResolver<ElementTs, ResolverDirection::RootFirst>::Resolve()), ...);
+                    // NodeResolver<Root>::Resolve();
+                    // NodeResolver<Child1>::Resolve();
+                    // NodeResolver<Child2>::Resolve();
+                    // NodeResolver<GrandChild1>::Resolve();
+                    // ...
+                }
+            }
+            else
+            {
+                std::cerr << "LeafFirst\n";
+                {
+                    // pack
+                    // Here, it might be a good idea to pack the items back into the pack (stack) in order to reverse the order
+                    // NodeResolver<Tag, ResolverDirection::LeafFirst>::Resolve();
+                    ((NodeResolver<ElementTs, ResolverDirection::LeafFirst>::Resolve()), ...);
+                    
+                    // ...
+                    // NodeResolver<GrandChild1>::Resolve();
+                    // NodeResolver<Child2>::Resolve();
+                    // NodeResolver<Child1>::Resolve();
+                    // NodeResolver<Root>::Resolve();
+                }
+            }
+        }
+    };
+    // ============================================================== COMPILER ==============================================================
+    // ============================================================== COMPILER ==============================================================
 
     // ============================================================
 
