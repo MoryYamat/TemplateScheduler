@@ -121,13 +121,46 @@ namespace tsr
         LeafFirst
     };
 
+    // helpers
+    template<ResolverDirection Direction>
+    inline constexpr void PrintResolverDirection()
+    {
+        if constexpr (Direction == ResolverDirection::RootFirst)
+        {
+            std::cerr << "Root First\n";
+        }
+        else
+        {
+            std::cerr << "Leaf First\n";
+        }
+    }
+
+    template<typename Tag>
+    struct TagResolver{
+        static void Resolve()
+        {
+            std::cerr << "Graph Type = " << typeid(Tag).name() << "\n";
+        }
+    };
+
+    void indent(int indent = 0)
+    {
+        for(int i = 0; i < indent; i++)
+            std::cerr << "-";
+    }
+
     // ======================== Resolver ==========================
     // TEST
     // UNIT
-
     template <typename T, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct NodeResolver
     {
+        static void Resolve(int i)
+        {
+            indent(i);
+            std::cerr << "Type = " << typeid(T).name() << "\n";
+        }
+
         static void Resolve()
         {
             std::cerr << "Type = " << typeid(T).name() << "\n";
@@ -136,15 +169,33 @@ namespace tsr
     template <typename T, ResolverDirection Direction>
     struct NodeResolver<Node<T>, Direction>
     {
+        static void Resolve(int i)
+        {
+            NodeResolver<T, Direction>::Resolve(i);
+        }
+
         static void Resolve()
         {
-            NodeResolver<T>::Resolve();
+            NodeResolver<T, Direction>::Resolve();
         }
     };
-
     template <typename Root, typename... ElementTs, ResolverDirection Direction>
     struct NodeResolver<Arc<Root, ElementTs...>, Direction>
     {
+        static void Resolve(int i)
+        {
+            if constexpr (Direction == ResolverDirection::RootFirst)
+            {
+                NodeResolver<Root, ResolverDirection::RootFirst>::Resolve(i);
+                ((NodeResolver<ElementTs, ResolverDirection::RootFirst>::Resolve(i + 4)), ...);
+            }
+            else
+            {
+                ((NodeResolver<ElementTs, ResolverDirection::LeafFirst>::Resolve(i + 4)), ...);
+                NodeResolver<Root, ResolverDirection::LeafFirst>::Resolve(i);
+            }
+        }
+
         static void Resolve()
         {
             if constexpr (Direction == ResolverDirection::RootFirst)
@@ -159,13 +210,18 @@ namespace tsr
             }
         }
     };
-
     template <typename Tag, typename... ElementTs, ResolverDirection Direction>
     struct NodeResolver<Graph<Tag, ElementTs...>, Direction>
     {
+        static void Resolve(int i)
+        {
+            TagResolver<Tag>::Resolve();
+            ((NodeResolver<ElementTs, Direction>::Resolve(i)), ...);
+        }
+
         static void Resolve()
         {
-            NodeResolver<Tag, Direction>::Resolve();
+            TagResolver<Tag>::Resolve();
             ((NodeResolver<ElementTs, Direction>::Resolve()), ...);
         }
     };
@@ -177,37 +233,51 @@ namespace tsr
     template <typename Tag, ElementType... ElementTs, ResolverDirection Direction>
     struct ResolveOrder<Graph<Tag, ElementTs...>, Direction>
     {
+        static void Resolve(int indent)
+        {
+            PrintResolverDirection<Direction>();
+            NodeResolver<Graph<Tag, ElementTs...>,Direction>::Resolve(0);
+        }
+
         static void Resolve()
         {
-            if constexpr (Direction == ResolverDirection::RootFirst)
-            {
-                std::cerr << "RootFirst\n";
-                {
-                    // NodeResolver<Tag, ResolverDirection::RootFirst>::Resolve();
-                    ((NodeResolver<ElementTs, ResolverDirection::RootFirst>::Resolve()), ...);
-                    // NodeResolver<Root>::Resolve();
-                    // NodeResolver<Child1>::Resolve();
-                    // NodeResolver<Child2>::Resolve();
-                    // NodeResolver<GrandChild1>::Resolve();
-                    // ...
-                }
-            }
-            else
-            {
-                std::cerr << "LeafFirst\n";
-                {
-                    // pack
-                    // Here, it might be a good idea to pack the items back into the pack (stack) in order to reverse the order
-                    // NodeResolver<Tag, ResolverDirection::LeafFirst>::Resolve();
-                    ((NodeResolver<ElementTs, ResolverDirection::LeafFirst>::Resolve()), ...);
-                    
-                    // ...
-                    // NodeResolver<GrandChild1>::Resolve();
-                    // NodeResolver<Child2>::Resolve();
-                    // NodeResolver<Child1>::Resolve();
-                    // NodeResolver<Root>::Resolve();
-                }
-            }
+            PrintResolverDirection<Direction>();
+            NodeResolver<Graph<Tag, ElementTs...>,Direction>::Resolve();
+            // ((NodeResolver<ElementTs, Direction>::Resolve(0)), ...);// The template deployment is too fast. -> Pass to a graph-specific component before deployment.
+            // ================================ Direction == ResolverDirection::RootFirst ================================ 
+            // ResolverDirection::RootFirst
+            // NodeResolver<Root>::Resolve();
+            // NodeResolver<Child1>::Resolve();
+            // NodeResolver<Child2>::Resolve();
+            // NodeResolver<GrandChild1>::Resolve();
+            // ...
+
+
+            // ================================ Direction == ResolverDirection::LeafFirst ================================ 
+            // ...
+            // NodeResolver<GrandChild1>::Resolve();
+            // NodeResolver<Child2>::Resolve();
+            // NodeResolver<Child1>::Resolve();
+            // NodeResolver<Root>::Resolve();
+
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ old ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+            // if constexpr (Direction == ResolverDirection::RootFirst)// This branching point may not be necessary
+            // {
+            //     std::cerr << "RootFirst\n";// 
+            //     {
+            //     }
+            // }
+            // else
+            // {
+            //     std::cerr << "LeafFirst\n";
+            //     {
+            //         // pack
+            //         // Here, it might be a good idea to pack the items back into the pack (stack) in order to reverse the order
+            //         // NodeResolver<Tag, ResolverDirection::LeafFirst>::Resolve();
+            //         ((NodeResolver<ElementTs, ResolverDirection::LeafFirst>::Resolve()), ...);
+            //     }
+            // }
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         }
     };
     // ============================================================== COMPILER ==============================================================

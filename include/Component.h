@@ -70,4 +70,21 @@ namespace tsr
             std::cerr << "CollisionMask" << "\n";
         }
     };
+   
+    //TEST
+    struct Root{};
+    struct CLeft_1{};
+    struct CRight_1{};
+    struct CRight_2{};
+    struct CCLeft_1{};
+    struct CCLeft_2{};
+    struct CCRight_1{};
+    struct CCCLeft_1{};
+    struct CCCRight_1{};
+
+    // CYCLIC TEST
+    struct E_1{};
+    struct E_2{};
+    struct E_3{};
+    struct E_4{};
 }

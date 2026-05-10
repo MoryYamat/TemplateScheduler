@@ -137,25 +137,88 @@ Therefore, a domain that has another domain upstream needs to be processed only 
 
 ## minimum implementation
 
-
-### 0.
-- Build CompileTime DAG System
-
+---
 API
+
+- [ Component ]  
+     - Use as usual in user-space logic.
+```
+struct Pos{};
+struct Vel{};
+struct Acc{};
+```
+
+TSCHEDULER API:  
+
+- [ Descriptor]
+     - dependency
+     - ordering
+     - phase
+     - access pattern
+
+```
+// Wraps the regular type
+using PosNode = Node<Pos>;
+using DisNode = Node<Dis>;// distance
+using VelNode = Node<Vel>;
+using AccNode = Node<Acc>;
+
+// link nodes and arcs
+using Ontology_Vel_Depend = Arc<VelNode, AccNode>;
+using Ontology_Pos_Depend = Arc<PosNode, DisNode, Ontology_Vel_Depend>;  // Graph Root
+
+// construct graph
+struct PhysTag{};
+using Ontology_PysGraph = Graph<PhysTag, Ontology_Pos_Depend>;
+```
+
+- [ Compile-time Resolver ]
+  - DAG resolve
+  - topo sort
+  - validation
+  - cycle detection
+
+```
+
+```
+
+---
 
 ### 1.
 [A structure that seems necessary]:
 - A system for building and outputting component dependencies expressed solely through templates.
-- 
+
 
 [Minimum implementation]: 
 - Building a Meta Hierarchy Structure for Data Structures Using Templates
 - The process of iterating through that hierarchical structure in reverse order
 
+
 [Useful technologies]:
 - Compiler and linker dependency resolution (Topological sorting)
 - consider how to extend component dependencies into a hierarchical structure and how to implement it.
 
+### 1.5 
+`Base on Implementation 1`
+
+[Design Problems]  
+- How to control the resolution order of another leaf with the same root
+- How to handle duplicate nodes
+- Should we use the order of ElementTs within the Graph as is?
+- In LeafFirst, do you also reverse the order of the Graph elements themselves?
+
+- **The current `ResolverDirection::RootFirst/LeafFirst` describes a method of interpreting a graph, not a search algorithm..**  
+For example, interpreting a directed graph constructed as an ontology graph in reverse (i.e., as a graph with multiple roots, each with one child) can be interpreted as a task dependency.
+
+[Concrete Problems]
+- In the case of RootFirst, the order is Root->Leaf (leftmost)-> "Leftmost" refers to the order in which the template parameters are written.
+
+The question to consider is:  
+- Is it better to look at the children of the children first, then scan the younger siblings? (DPS)
+
+Is it better to look at all the children first, then scan the children (grandchildren) of the children? (BFS)
+
+[Consideration]
 
 ### 2. 
 [Minimum implementation]:
@@ -164,4 +227,5 @@ API
 
 
 ## Useful technorlogies 
+
 - compile-time DAG 

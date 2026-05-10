@@ -26,6 +26,15 @@ int main()
     std::cerr << "======= Leaf First ======= \n";
     ResolveOrder<Ontology_PysGraph, ResolverDirection::LeafFirst>::Resolve();
 
+    std::cerr << "\n ======= Test ======= \n";
+    ResolveOrder<TestGraph, ResolverDirection::RootFirst>::Resolve(0);
+    std::cerr << "\n";
+    ResolveOrder<TestGraph, ResolverDirection::LeafFirst>::Resolve(0);
+
+    std::cerr << "\n ======= Cyclic ====== \n";
+    ResolveOrder<Cy_Graph, ResolverDirection::RootFirst>::Resolve(0);
+    ResolveOrder<Cy_Graph, ResolverDirection::LeafFirst>::Resolve(0);
+
     // Type Force Checker
     // using ForceCheck = typename Ontology_PysGraph::element_types;
     return 0;
