@@ -32,14 +32,14 @@ namespace tsr
     using  N_CCCLeft_1 =    Node<CCCLeft_1>;
     using  N_CCCRight_1 =   Node<CCCRight_1>;
 
-    using A_CCRight = Arc<N_CCRight_1, N_CCCLeft_1, N_CCCRight_1>;
+    using A_CCRight = Arc<N_CCRight_1, N_CCCLeft_1, N_CCCRight_1>;// OK
+    // using A_CCRight_Error = Arc<N_CCRight_1, N_CCCLeft_1, N_CCCRight_1, N_CCCRight_1>;// need to be errored :: done
+    using A_CCRithg_Error_Dup = Arc<N_CCRight_1, N_CCCRight_1, N_CCCLeft_1>;// need to be errored  :: done
     using A_CRight = Arc<N_CRight_1, N_CCLeft_1, N_CCLeft_2, A_CCRight>;
     using A_Root = Arc<N_Root, N_CLeft_1, A_CRight, N_CRight_2>;
     struct TestTag{};
-    // using TestGraph = Graph<TestTag, A_Root;
-    using TestGraph = Graph<TestTag, A_Root, A_Root>;// need to be errored
-
-    // Test build with another method
+    using TestGraph = Graph<TestTag, A_Root>;
+    // using TestGraph = Graph<TestTag, A_Root, A_Root>;// need to be errored
 
     // CYCLIC TEST
     using Cy_N_1 = Node<E_1>;
