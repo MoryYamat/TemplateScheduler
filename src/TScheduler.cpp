@@ -31,12 +31,21 @@ int main()
     std::cerr << "\n";
     ResolveOrder<TestGraph, ResolverDirection::LeafFirst>::Resolve(0);
 
+    
     // std::cerr << "\n ======= Cyclic ====== \n";
     // ResolveOrder<Cy_Graph, ResolverDirection::RootFirst>::Resolve(0);
     // ResolveOrder<Cy_Graph, ResolverDirection::LeafFirst>::Resolve(0);
 
     // relation test
     std::cerr << "\n ===== Relation Test ===== \n";
+
+    std::cerr << "\n ===== Root First ===== \n";
+    TopologicalOrder<TestGraph, ResolverDirection::RootFirst>::Print();
+
+    std::cerr << "\n ===== Leaf First =====\n";
+    // TopologicalOrder<TestGraph, ResolverDirection::LeafFirst>::Print();
+    //TestGraph::Print();
+    
     //R_Test::Print();
     // Type Force Checker
     // using ForceCheck = typename Ontology_PysGraph::element_types;

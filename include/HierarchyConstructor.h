@@ -14,7 +14,6 @@ namespace tsr
     // Arc<R, B...> // R <- B... の関係
     // Graph<Tag, Elements...>
     // ============================================================== DESCRPT ==============================================================
-    // ============================================================== DESCRPT ==============================================================
     template <typename T>
     struct Node
     {
@@ -78,7 +77,6 @@ namespace tsr
     };
     // ##################################################
 
-    
     // ============================================ Validations ============================================
     // *********************** type traits ***********************
     // 1. Relation<Root, Branch>// primitive
@@ -92,8 +90,10 @@ namespace tsr
         }
     };
 
-    template<typename... Relations>
-    struct RelationPack{};
+    template <typename... Relations>
+    struct RelationPack
+    {
+    };
 
     // 2. BranchRoot<T>// to extract Arc<Node<RootNode>, Node<BranchTs>...> and Arc<Node<RootNode>, Arc<RootNode,BranchTs...>>
     template <typename T>
@@ -143,11 +143,11 @@ namespace tsr
     template <NodeType RootNodeT, typename... BranchTs>
     struct ToRelations<Arc<RootNodeT, BranchTs...>>
     {
-        using direct_type = RelationPack<Relation<RootNodeT, typename ElementRoot<BranchTs>::type>...>;  // direct
+        using direct_type = RelationPack<Relation<RootNodeT, typename ElementRoot<BranchTs>::type>...>; // direct
 
-        using nested_type = typename Concat<typename ToRelations<BranchTs>::type...>::type;             // nested
+        using nested_type = typename Concat<typename ToRelations<BranchTs>::type...>::type; // nested
 
-        using type = typename Concat<direct_type, nested_type>::type;                                   // concat
+        using type = typename Concat<direct_type, nested_type>::type; // concat
 
         static void Print()
         {
@@ -155,17 +155,48 @@ namespace tsr
         }
     };
     // 5. IsUnique<flattened relations...>
-    template<typename Pack>
-    struct IsUniqueRelations : std::false_type{};
-    template<typename... Relations>
-    struct IsUniqueRelations<RelationPack<Relations...>> : IsUnique<Relations...> {};
+    template <typename Pack>
+    struct IsUniqueRelations : std::false_type
+    {
+    };
+    template <typename... Relations>
+    struct IsUniqueRelations<RelationPack<Relations...>> : IsUnique<Relations...>
+    {
+    };
+
+    // ============== Bidirectional edge detection ==============
+    template <typename A, typename... Relations>
+    struct ContainsReverse;
+    template <typename A, typename B, typename... Relations>
+    struct ContainsReverse<Relation<A, B>, Relations...>
+        : std::bool_constant<(std::is_same_v<Relation<B, A>, Relations> || ...)>
+    {
+    };
+    template <typename... Relations>
+    struct HasBidirectionalRelation : std::false_type
+    {
+    };
+    template <typename R, typename... Rest>
+    struct HasBidirectionalRelation<R, Rest...>
+        : std::bool_constant<(ContainsReverse<R, Rest...>::value || HasBidirectionalRelation<Rest...>::value)>
+    {
+    };
+    // for pack
+    template <typename Pack>
+    struct HasBidirectionalRelationInPack : std::false_type
+    {
+    };
+    template <typename... Relations>
+    struct HasBidirectionalRelationInPack<RelationPack<Relations...>> : HasBidirectionalRelation<Relations...>
+    {
+    };
 
     template <typename T>
     struct IsElement : std::false_type
     {
     };
-    template <typename NodeT>
-    struct IsElement<Node<NodeT>> : std::true_type
+    template <typename T>
+    struct IsElement<Node<T>> : std::true_type
     {
     };
     // template<PureNode RootNodeT, typename... BranchTs>
@@ -205,19 +236,29 @@ namespace tsr
                       "Graph elements must be valid Node<T> or valid Arc<Node<T>, ...>");
 
         using relations = typename Concat<typename ToRelations<ElementTs>::type...>::type;
-        static_assert(IsUniqueRelations<relations>::value, "Duplicated relations detected");//  check relational duplication
+        // ++++++++  Check for duplicates in Relation<A,B> ++++++++ 
+        static_assert(IsUniqueRelations<relations>::value,
+                      "Duplicated relations detected"); 
+        // ++++++++ Check for bidirectional edges ++++++++ 
+        static_assert(!HasBidirectionalRelationInPack<relations>::value, "Bidirectional relations are not allowed");
+        // ++++++++ Check for circular node ++++++++
+        // static_assert(!Has)
+
+        static void Print()
+        {
+            std::cerr << typeid(relations).name() << "\n";
+        }
 
         using tag_type = Tag;
         using element_types = ElementPack<ElementTs...>;
-
     };
     // ##################################################
     // ==========================================================================================================================================================================================================================================================================
 
     // ============================================================== COMPILER ==============================================================
-    // ============================================================== COMPILER ==============================================================
 
     // =================== Scanning policy ========================
+    // @The resolver's responsibility is to specify the traversal semantics.()
     enum class ResolverDirection : std::uint32_t
     {
         RootFirst,
@@ -253,7 +294,7 @@ namespace tsr
             std::cerr << "-";
     }
 
-    // ======================== Resolver ==========================
+    // ======================== Resolver(Specify Scanning policy) ==========================
     // TEST
     // UNIT
     template <typename T, ResolverDirection Direction = ResolverDirection::RootFirst>
@@ -348,44 +389,106 @@ namespace tsr
         {
             PrintResolverDirection<Direction>();
             NodeResolver<Graph<Tag, ElementTs...>, Direction>::Resolve();
-            // ((NodeResolver<ElementTs, Direction>::Resolve(0)), ...);// The template deployment is too fast. -> Pass to a graph-specific component before deployment.
-            // ================================ Direction == ResolverDirection::RootFirst ================================
-            // ResolverDirection::RootFirst
-            // NodeResolver<Root>::Resolve();
-            // NodeResolver<Child1>::Resolve();
-            // NodeResolver<Child2>::Resolve();
-            // NodeResolver<GrandChild1>::Resolve();
-            // ...
-
-            // ================================ Direction == ResolverDirection::LeafFirst ================================
-            // ...
-            // NodeResolver<GrandChild1>::Resolve();
-            // NodeResolver<Child2>::Resolve();
-            // NodeResolver<Child1>::Resolve();
-            // NodeResolver<Root>::Resolve();
-
-            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ old ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // if constexpr (Direction == ResolverDirection::RootFirst)// This branching point may not be necessary
-            // {
-            //     std::cerr << "RootFirst\n";//
-            //     {
-            //     }
-            // }
-            // else
-            // {
-            //     std::cerr << "LeafFirst\n";
-            //     {
-            //         // pack
-            //         // Here, it might be a good idea to pack the items back into the pack (stack) in order to reverse the order
-            //         // NodeResolver<Tag, ResolverDirection::LeafFirst>::Resolve();
-            //         ((NodeResolver<ElementTs, ResolverDirection::LeafFirst>::Resolve()), ...);
-            //     }
-            // }
-            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         }
     };
-    // ============================================================== COMPILER ==============================================================
-    // ============================================================== COMPILER ==============================================================
+    // ======================================================================================================================================
+
+    // ==================== Topological Sort ======================
+    template<typename Pack, typename T>
+    struct ContainsInPack;
+    template<typename...Nodes, typename NodeT>
+    struct ContainsInPack<NodePack<Nodes...>, NodeT> : Contains<NodeT, Nodes...>{};
+
+    template<typename Pack, typename NodeT>
+    struct AppendUnique;
+    template<typename... NodeTs, typename NodeT>
+    struct AppendUnique<NodePack<NodeTs...>, NodeT>
+    {
+        using type = std::conditional_t<
+                    ContainsInPack<NodePack<NodeTs...>, NodeT>::value,
+                    NodePack<NodeTs...>,
+                    NodePack<NodeTs..., NodeT>
+                    >;
+    };
+    
+    template<typename NodePack, typename RelationT>
+    struct AppendRelationNodes;
+    template<typename NodePack, typename A, typename B>
+    struct AppendRelationNodes<NodePack, Relation<A,B>>
+    {
+        using with_a = typename AppendUnique<NodePack, A>::type;
+        using type = typename AppendUnique<with_a, B>::type;
+    };
+
+    template<typename NodePack, typename RelationPackT>
+    struct CollectNodesImpl;
+    template<typename Pack>
+    struct CollectNodesImpl<Pack, RelationPack<>>
+    {
+        using type = Pack;
+    };
+    template<typename NodePack, typename R, typename... Rest>
+    struct CollectNodesImpl<NodePack, RelationPack<R, Rest...>>
+    {
+        using next = typename AppendRelationNodes<NodePack, R>::type;
+        using type = typename CollectNodesImpl<next, RelationPack<Rest...>>::type;
+    };
+
+    template<typename RelationPackT>
+    struct CollectNodes;
+    template<typename... Relations>
+    struct CollectNodes<RelationPack<Relations...>>
+    {
+        using type = typename CollectNodesImpl<NodePack<>, RelationPack<Relations...>>::type;
+    };
+
+
+    template<typename RelationPack, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct TopologicalSort;
+
+    // // root first
+    template<typename...  Relations>
+    struct TopologicalSort<RelationPack<Relations...>, ResolverDirection::RootFirst>
+    {
+        using type = RelationPack<Relations...>;
+
+        
+        static void Print()
+        {
+            ((std::cerr << typeid(Relations).name() << "\n"),...);
+        }
+    };
+
+    // leaf first
+    template<typename...  Relations>
+    struct TopologicalSort<RelationPack<Relations...>, ResolverDirection::LeafFirst>
+    {        
+        using type = RelationPack<Relations...>;
+
+        
+        static void Print()
+        {
+            ((std::cerr << typeid(Relations).name() << "\n"),...);
+        }
+    };
+
+    // Conversion from a partial order to a linear order
+    template<typename GraphT, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct TopologicalOrder
+    {
+        using relations = typename GraphT::relations;
+        using nodes = typename CollectNodes<relations>::type;
+        // using type = NodePack<TopologicalSort<relations, Direction>>;
+
+        static void Print()
+        {
+            std::cerr << typeid(nodes).name() << "\n\n";
+            // TopologicalSort<relations, Direction>::Print();
+
+        }
+    };
+
+
 
     // ============================================================
 
