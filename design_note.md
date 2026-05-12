@@ -184,7 +184,7 @@ using Ontology_PysGraph = Graph<PhysTag, Ontology_Pos_Depend>;
 
 ---
 
-### 1.
+<!-- ### 1. (26/05/08)
 [A structure that seems necessary]:
 - A system for building and outputting component dependencies expressed solely through templates.
 
@@ -198,7 +198,7 @@ using Ontology_PysGraph = Graph<PhysTag, Ontology_Pos_Depend>;
 - Compiler and linker dependency resolution (Topological sorting)
 - consider how to extend component dependencies into a hierarchical structure and how to implement it.
 
-### 1.5 
+### 1.5 (26/05/10)
 `Base on Implementation 1`
 
 [Design Problems]  
@@ -216,9 +216,11 @@ For example, interpreting a directed graph constructed as an ontology graph in r
 The question to consider is:  
 - Is it better to look at the children of the children first, then scan the younger siblings? (DPS)
 
-Is it better to look at all the children first, then scan the children (grandchildren) of the children? (BFS)
+[Consideration] -->
 
-[Consideration]
+### 2 (26/05/12)
+- Implementation of a process for topological sorting a graph
+
 
 ### 2. 
 [Minimum implementation]:

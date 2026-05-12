@@ -48,6 +48,21 @@ namespace tsr
     using BidirectionalGraph = Graph<TestTag, A_CCRight_Error_Bidirection_1, A_CCRight_Error_Bidirection_2>;
     // using ForceCheck_Simple_Bidirection = typename BidirectionalGraph::relations;
 
+    // ======  TOPOLOGICALSORT ====== 
+    struct TP_Root{};
+    struct TP_0{};
+    struct TP_1{};
+    struct TP_2{};
+    struct TP_3{};
+    struct TP_4{};
+
+    using TP_NR = Node<TP_Root>;
+    using TP_N0 = Node<TP_0>;
+    using TP_N1 = Node<TP_1>;
+    using TP_N2 = Node<TP_2>;
+    using TP_N3 = Node<TP_3>;
+    using TP_N4 = Node<TP_4>;
+
     // CYCLIC TEST
     using Cy_N_1 = Node<E_1>;
     using Cy_N_2 = Node<E_2>;

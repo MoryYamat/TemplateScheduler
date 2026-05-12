@@ -154,6 +154,7 @@ namespace tsr
             std::cerr << typeid(type).name() << "\n";
         }
     };
+
     // 5. IsUnique<flattened relations...>
     template <typename Pack>
     struct IsUniqueRelations : std::false_type
@@ -442,6 +443,57 @@ namespace tsr
         using type = typename CollectNodesImpl<NodePack<>, RelationPack<Relations...>>::type;
     };
 
+    // 
+    template<typename NodeT,typename Relation, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct HasPredecessorImpl : std::false_type{};
+    template<typename NodeT, NodeType A, NodeType B>
+    struct HasPredecessorImpl<NodeT, Relation<A, B>, ResolverDirection::RootFirst> :
+        std::bool_constant<(std::is_same_v<NodeT, B>)>{};// check if a Predecessor exists in NodeT.
+    template<typename NodeT, NodeType A, NodeType B>
+    struct HasPredecessorImpl<NodeT, Relation<A, B>, ResolverDirection::LeafFirst> :
+        std::bool_constant<(std::is_same_v<NodeT, A>)>{};// check if a Predecessor exists in NodeT(Leaf First).
+    
+    template<typename NodeT, typename RelationPackT, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct HasPredecessor;
+    template<typename NodeT, ResolverDirection Direction, typename... Relations>
+    struct HasPredecessor<NodeT, RelationPack<Relations...>, Direction>
+        : std::bool_constant<(HasPredecessorImpl<NodeT, Relations, Direction>::value || ... )>{};
+
+    // Collect nodes that do not have a preceding node
+    template<typename ResultPack, typename NodeT, typename RelationPackT, ResolverDirection Direction>
+    struct AppendIfNoPredecessorNodes;
+
+    template<typename ResultPack, NodeType NodeT, typename RelationPackT, ResolverDirection Direction>
+    struct AppendIfNoPredecessorNodes<ResultPack, NodeT, RelationPackT, Direction>
+    {
+        using type = std::conditional_t<HasPredecessor<NodeT, RelationPackT, Direction>::value, ResultPack, typename AppendUnique<ResultPack, NodeT>::type>;
+    };
+
+    template<typename ResultPackT, typename NodePackT, typename RelationPackT, ResolverDirection Direction>
+    struct CollectReadyNodesImpl
+    {
+
+    };
+    template<typename ResultPackT,typename RelationPackT, ResolverDirection Direction>
+    struct CollectReadyNodesImpl<ResultPackT, NodePack<>, RelationPackT, Direction>
+    {
+        using type = ResultPackT;
+    };
+    template<typename ResultPackT, typename HeadNodeT, typename... RestNodeTs, typename RelationPackT, ResolverDirection Direction>
+    struct CollectReadyNodesImpl<ResultPackT, NodePack<HeadNodeT, RestNodeTs...>, RelationPackT, Direction>
+    {
+        using next_result = typename AppendIfNoPredecessorNodes<ResultPackT, HeadNodeT, RelationPackT, Direction>::type;
+        using type = typename CollectReadyNodesImpl<next_result, NodePack<RestNodeTs...>, RelationPackT, Direction>::type;
+    };
+    
+    template<typename NodePackT, typename RelationPackT, ResolverDirection Direction>
+    struct CollectReadyNodes;
+    template<typename... NodeTs, typename RelationPackT, ResolverDirection Direction>
+    struct CollectReadyNodes<NodePack<NodeTs...>, RelationPackT, Direction>
+    {
+        using type = typename CollectReadyNodesImpl<NodePack<>, NodePack<NodeTs...>, RelationPackT, Direction>::type;
+    };
+
 
     template<typename RelationPack, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct TopologicalSort;
@@ -456,6 +508,8 @@ namespace tsr
         static void Print()
         {
             ((std::cerr << typeid(Relations).name() << "\n"),...);
+            // AppendUnique<Relations...>::Print();// 
+
         }
     };
 
