@@ -79,6 +79,7 @@ int main()
     std::cerr << "AppendIfNoPredecessorNodes_Result = " << typeid(no_predecessor_nodes_1::type).name() << "\n";// NodePack<TP_NR>
     std::cerr << "AppendIfNoPredecessorNodes_Result = " << typeid(no_predecessor_nodes_2::type).name() << "\n";// NodePack<>
 
+    std::cerr << "\n ============= CollectReadyNodes =============\n";
     using collect_predecessor_nodes_1 = CollectReadyNodes<
     NodePack<TP_NR, TP_N0, TP_N1, TP_N2>, RelationPack<Relation<TP_NR, TP_N0>, Relation<TP_N0, TP_N1>, Relation<TP_N0, TP_N2>>, ResolverDirection::RootFirst>;
     using collect_predecessor_nodes_2 = CollectReadyNodes< 
@@ -86,14 +87,24 @@ int main()
     std::cerr << "collect_predecessor_nodes_1_Result = " << typeid(collect_predecessor_nodes_1::type).name() << "\n";// NodePack<TP_NR>
     std::cerr << "collect_predecessor_nodes_2_Result = " << typeid(collect_predecessor_nodes_2::type).name() << "\n";// NodePack<>
 
-    // N_CRight_1
-    // N_CRight_2
-    // N_CCLeft_1
-    // N_CCLeft_2
-    // N_CCRight_1
-    // N_CCCLeft_1
-    // N_CCCRight_1
+    // Nodes for testing
+    // TP_NR
+    // TP_N0
+    // TP_N1
+    // TP_N2
 
+
+    std::cerr << "\n ============= PruneRelationsByNode =============\n";
+    using prune_relations_by_node_1 = PruneRelationsByNode<RelationPack<>, TP_NR, RelationPack<Relation<TP_NR, TP_N0>, Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>, Relation<TP_NR, TP_N3>>, ResolverDirection::RootFirst>::type;
+    std::cerr << "prune_relations_by_node_1_Result = " << typeid(prune_relations_by_node_1).name() << "\n";// RelationPack<Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>>>
+    
+    std::cerr << "\n";
+    using prune_relations_by_nodes_1 = PruneRelationsByNodes<NodePack<TP_NR, TP_N4>, RelationPack<Relation<TP_NR, TP_N0>, Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>, Relation<TP_NR, TP_N3>, Relation<TP_N4, TP_N5>>, ResolverDirection::RootFirst>::type;
+    std::cerr << "prune_relations_by_nodes_1_Result = " << typeid(prune_relations_by_nodes_1).name() << "\n";// RelationPack<Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>>>
+
+    std::cerr << "\n ============= PruneNode =============\n";
+    using prune_nodes_by_nodes_1 = PruneNodeByNodes<NodePack<>/*resutl*/, NodePack<TP_NR>/*list to delete*/, NodePack<TP_NR, TP_N0, TP_N1, TP_N2, TP_N3>/*current node list*/>::type;
+    std::cerr << "prune_nodes_by_node_1_Result = " << typeid(prune_nodes_by_nodes_1).name() << "\n";// NodePack<TP_N0, TP_N1, TP_N2, TP_N3>
 
 
     std::cerr << "\n ===== Leaf First =====\n";

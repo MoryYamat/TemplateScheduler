@@ -55,6 +55,7 @@ namespace tsr
     struct TP_2{};
     struct TP_3{};
     struct TP_4{};
+    struct TP_5{};
 
     using TP_NR = Node<TP_Root>;
     using TP_N0 = Node<TP_0>;
@@ -62,6 +63,7 @@ namespace tsr
     using TP_N2 = Node<TP_2>;
     using TP_N3 = Node<TP_3>;
     using TP_N4 = Node<TP_4>;
+    using TP_N5 = Node<TP_5>;
 
     // CYCLIC TEST
     using Cy_N_1 = Node<E_1>;

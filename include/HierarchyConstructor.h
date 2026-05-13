@@ -443,7 +443,7 @@ namespace tsr
         using type = typename CollectNodesImpl<NodePack<>, RelationPack<Relations...>>::type;
     };
 
-    // 
+    // For Sort Algorithms
     template<typename NodeT,typename Relation, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct HasPredecessorImpl : std::false_type{};
     template<typename NodeT, NodeType A, NodeType B>
@@ -470,12 +470,9 @@ namespace tsr
     };
 
     template<typename ResultPackT, typename NodePackT, typename RelationPackT, ResolverDirection Direction>
-    struct CollectReadyNodesImpl
-    {
-
-    };
+    struct CollectReadyNodesImpl;
     template<typename ResultPackT,typename RelationPackT, ResolverDirection Direction>
-    struct CollectReadyNodesImpl<ResultPackT, NodePack<>, RelationPackT, Direction>
+    struct CollectReadyNodesImpl<ResultPackT, NodePack<>, RelationPackT, Direction>// termination condition
     {
         using type = ResultPackT;
     };
@@ -493,6 +490,91 @@ namespace tsr
     {
         using type = typename CollectReadyNodesImpl<NodePack<>, NodePack<NodeTs...>, RelationPackT, Direction>::type;
     };
+
+    // ============ Remove Relations ============ 
+    // append
+    template<typename PackT, typename RelationT>
+    struct AppendRelation;
+    template<typename... ExistingTs, typename RelationT>
+    struct AppendRelation<RelationPack<ExistingTs...>, RelationT>
+    {
+        using type = RelationPack<ExistingTs..., RelationT>;
+    };
+    
+    // predicate
+    template<typename NodeT, typename RelationT, ResolverDirection Direction>
+    struct ShouldRemoveRelation;
+    template<typename NodeT, typename A, typename B>
+    struct ShouldRemoveRelation<NodeT, Relation<A, B>, ResolverDirection::RootFirst> :
+        std::bool_constant<std::is_same_v<NodeT, A>>{};
+    template<typename NodeT, typename A, typename B>
+    struct ShouldRemoveRelation<NodeT, Relation<A, B>, ResolverDirection::LeafFirst> :
+        std::bool_constant<std::is_same_v<NodeT, B>>{};
+    
+    // fileter
+    template<typename ResultPackT, typename NodeT, typename RelationPackT, ResolverDirection Direction>
+    struct PruneRelationsByNode;
+    template<typename ResultPackT, typename  NodeT, ResolverDirection Direction>
+    struct PruneRelationsByNode<ResultPackT, NodeT, RelationPack<>, Direction>
+    {
+        using type = ResultPackT;
+    };
+    template<typename ResultPackT, typename NodeT, typename FirstRelationT, typename... RestRelationTs, ResolverDirection Direction>
+    struct PruneRelationsByNode<ResultPackT, NodeT, RelationPack<FirstRelationT, RestRelationTs...>, Direction>
+    {
+        using next_result = std::conditional_t<ShouldRemoveRelation<NodeT, FirstRelationT, Direction>::value,  ResultPackT, typename AppendRelation<ResultPackT, FirstRelationT>::type>;
+        using type = typename PruneRelationsByNode<next_result, NodeT, RelationPack<RestRelationTs...>, Direction>::type;
+    };
+
+    template<typename NodePackT, typename CurrentRelationPackT, ResolverDirection Direction>
+    struct PruneRelationsByNodes;
+    template<typename CurrentRelationPackT, ResolverDirection Direction>
+    struct PruneRelationsByNodes<NodePack<>, CurrentRelationPackT, Direction>
+    {
+        using type = CurrentRelationPackT;
+    };
+    template<typename FirstNodeT, typename... RestNodeTs, typename CurrentRelationPackT, ResolverDirection Direction>
+    struct PruneRelationsByNodes<NodePack<FirstNodeT, RestNodeTs...>, CurrentRelationPackT, Direction>
+    {
+        using next_relations = typename PruneRelationsByNode<RelationPack<>, FirstNodeT, CurrentRelationPackT, Direction>::type;
+        using type = typename PruneRelationsByNodes<NodePack<RestNodeTs...>, next_relations, Direction>::type;
+    };
+
+    // ============ remove nodes ============ 
+    // append
+    template<typename PackT, typename NodeT>
+    struct AppendNode;
+    template<typename... ExistingTs, typename NodeT>
+    struct AppendNode<NodePack<ExistingTs...>, NodeT>
+    {
+        using type = NodePack<ExistingTs..., NodeT>;
+    };
+
+    // predicate
+    template<typename TargetNodeT, typename NodePackT>
+    struct ShouldRemoveNode : std::true_type{};
+    template<typename TargetNodeT, typename... NodeTs>
+    struct ShouldRemoveNode<TargetNodeT, NodePack<NodeTs...>>: std::bool_constant<(std::is_same_v<TargetNodeT, NodeTs> || ...)>{};
+
+    // filter
+    template<typename ResultPackT/*accum*/, typename ReadyNodePackT/*List to delete*/, typename CurrentNodePackT/*intermediate results*/>
+    struct PruneNodeByNodes;
+    template<typename ResultPackT, typename ReadyNodePackT>
+    struct PruneNodeByNodes<ResultPackT, ReadyNodePackT, NodePack<>>
+    {
+        using type = ResultPackT;
+    };
+    template<typename ResultPackT, typename ReadyNodePackT, typename FirstNodeT, typename... RestNodeTs>
+    struct PruneNodeByNodes<ResultPackT, ReadyNodePackT, NodePack<FirstNodeT, RestNodeTs...>>
+    {
+        using next_result = std::conditional_t<ShouldRemoveNode<FirstNodeT, ReadyNodePackT>::value, ResultPackT, typename AppendNode<ResultPackT, FirstNodeT>::type>; 
+        using type = typename PruneNodeByNodes<next_result, ReadyNodePackT, NodePack<RestNodeTs...>>::type;
+    };
+    
+    // ============= TOPO SORT IMPL ============= 
+    template<typename OrderPackT, typename RemainingNodePackT, typename RemainingRelationPackT, ResolverDirection Direction>
+    struct TopologicalSortImpl;
+    
 
 
     template<typename RelationPack, ResolverDirection Direction = ResolverDirection::RootFirst>
@@ -530,8 +612,8 @@ namespace tsr
     template<typename GraphT, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct TopologicalOrder
     {
-        using relations = typename GraphT::relations;
-        using nodes = typename CollectNodes<relations>::type;
+        using relations = typename GraphT::relations;                   // Create a set of relations from a graph.
+        using nodes = typename CollectNodes<relations>::type;           // Create a set of nodes from a relation.
         // using type = NodePack<TopologicalSort<relations, Direction>>;
 
         static void Print()
