@@ -99,6 +99,7 @@ int main()
     std::cerr << "prune_relations_by_node_1_Result = " << typeid(prune_relations_by_node_1).name() << "\n";// RelationPack<Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>>>
     
     std::cerr << "\n";
+    // <list to delete node that is no predecessor of relation, RelationPack, Direction>
     using prune_relations_by_nodes_1 = PruneRelationsByNodes<NodePack<TP_NR, TP_N4>, RelationPack<Relation<TP_NR, TP_N0>, Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>, Relation<TP_NR, TP_N3>, Relation<TP_N4, TP_N5>>, ResolverDirection::RootFirst>::type;
     std::cerr << "prune_relations_by_nodes_1_Result = " << typeid(prune_relations_by_nodes_1).name() << "\n";// RelationPack<Relation<TP_N0, TP_N1>, Relation<TP_N1,TP_N2>>>
 
@@ -106,6 +107,11 @@ int main()
     using prune_nodes_by_nodes_1 = PruneNodeByNodes<NodePack<>/*resutl*/, NodePack<TP_NR>/*list to delete*/, NodePack<TP_NR, TP_N0, TP_N1, TP_N2, TP_N3>/*current node list*/>::type;
     std::cerr << "prune_nodes_by_node_1_Result = " << typeid(prune_nodes_by_nodes_1).name() << "\n";// NodePack<TP_N0, TP_N1, TP_N2, TP_N3>
 
+    std::cerr << "\n ============= TOPOLOGICAL SORT ========== \n";
+    using topological_sort_1 = TopologicalSort<TestGraph, ResolverDirection::RootFirst>::type;
+    using topological_sort_2 = TopologicalSort<TestGraph, ResolverDirection::LeafFirst>::type;
+    std::cerr << "topological_sort_1_Result = " << typeid(topological_sort_1).name() << "\n";
+    std::cerr << "\ntopological_sort_2_Result = " << typeid(topological_sort_2).name() << "\n";
 
     std::cerr << "\n ===== Leaf First =====\n";
     // TopologicalOrder<TestGraph, ResolverDirection::LeafFirst>::Print();
