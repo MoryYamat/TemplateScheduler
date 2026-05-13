@@ -100,8 +100,6 @@ Dependency
 Problems
 - How to represent the dependency between diffrent domain Components, such as position and collision dependencies
 
-Let's just give it a try.
-
 First Purpose
 - Contruct Simple Dependencies: Acc->Vel->Pos
 - Extractor : 
@@ -218,15 +216,34 @@ The question to consider is:
 
 [Consideration] -->
 
-### 2 (26/05/12)
-- Implementation of a process for topological sorting a graph
+<!-- ### 2 (26/05/12)　-> (26/05/13)
+- Implementation of a process for topological sorting a graph -->
+
+### 3. (26/05/13)
+- Exploring solutions to circular relationships in topological sorting
+
+#### Detecting Circular Relationships
+
+If there are no ready nodes while unprocessed nodes still remain, the remaining nodes contain one or more cycles.
+
+In other words:
+
+- `readynodeset` is empty
+- `Remaining_nodes` is not empty
+
+Therefore, at least one circular relationship exists among the remaining nodes.
+
+#### How to order non-topogically sortable nodes
+- (26/05/12) Postpone the solution and implement the initial concept(Template Task Scheduler)
+
+### Template Task Scheduler (Ontology/Graph-based)
+- I added `ExecuteOrder`, and it worked as expected.
 
 
-### 2. 
-[Minimum implementation]:
-- A system for building and parsing hierarchical relationships between domains.
-- Connecting to the Component hierarchy
 
+### Extensions
+- Extension 0: Supports multiple graphs
+- Extension 1: Supports circular resolution
 
 ## Useful technorlogies 
 

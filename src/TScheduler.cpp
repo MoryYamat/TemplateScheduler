@@ -26,21 +26,11 @@ int main()
     std::cerr << "======= Leaf First ======= \n";
     ResolveOrder<Ontology_PysGraph, ResolverDirection::LeafFirst>::Resolve();
 
-    std::cerr << "\n ======= Test ======= \n";
+    std::cerr << "\n ======= ResolverDirection TEST ======= \n";
     ResolveOrder<TestGraph, ResolverDirection::RootFirst>::Resolve(0);
     std::cerr << "\n";
     ResolveOrder<TestGraph, ResolverDirection::LeafFirst>::Resolve(0);
 
-    
-    // std::cerr << "\n ======= Cyclic ====== \n";
-    // ResolveOrder<Cy_Graph, ResolverDirection::RootFirst>::Resolve(0);
-    // ResolveOrder<Cy_Graph, ResolverDirection::LeafFirst>::Resolve(0);
-
-    // relation test
-    std::cerr << "\n ===== Relation Test ===== \n";
-
-    std::cerr << "\n ===== Root First ===== \n";
-    TopologicalOrder<TestGraph, ResolverDirection::RootFirst>::Print();
 
     std::cerr << "\n ===== HasPredecessor ==== \n";
     // IMPL 
@@ -113,12 +103,16 @@ int main()
     std::cerr << "topological_sort_1_Result = " << typeid(topological_sort_1).name() << "\n";
     std::cerr << "\ntopological_sort_2_Result = " << typeid(topological_sort_2).name() << "\n";
 
-    std::cerr << "\n ===== Leaf First =====\n";
-    // TopologicalOrder<TestGraph, ResolverDirection::LeafFirst>::Print();
-    //TestGraph::Print();
-    
+    // std::cerr << "\n ============== CYcle detection ========== \n";
+    // be detected by `static_assert(!std::is_same_v<ready, NodePack<>>, "Cycle detected or graph is not topologically sortable");`
+    // using topological_sort_cyclic_1 = TopologicalSort<Cy_Graph, ResolverDirection::RootFirst>::type;
+    // using topological_sort_cyclic_2 = TopologicalSort<Cy_Graph, ResolverDirection::LeafFirst>::type;
+
+    std::cerr << "\n ============== Exectution Order Test ========= \n";
+    ExecuteOrder<topological_sort_1>::Run();
+
     //R_Test::Print();
-    // Type Force Checker
+    // Type Force Checker (force instanciation)
     // using ForceCheck = typename Ontology_PysGraph::element_types;
     // using ForceCheck = typename TestGraph::element_types;
     using ForceCheck = typename TestGraph::relations;

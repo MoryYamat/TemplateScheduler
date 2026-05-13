@@ -72,15 +72,78 @@ namespace tsr
     };
    
     //TEST
-    struct Root{};
-    struct CLeft_1{};
-    struct CRight_1{};
-    struct CRight_2{};
-    struct CCLeft_1{};
-    struct CCLeft_2{};
-    struct CCRight_1{};
-    struct CCCLeft_1{};
-    struct CCCRight_1{};
+    struct Root
+    {
+        using type = Root;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CLeft_1
+    {
+        using type = CLeft_1;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CRight_1
+    {
+        using type = CRight_1;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CRight_2
+    {
+        using type = CRight_2;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CCLeft_1
+    {
+        using type = CCLeft_1;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CCLeft_2
+    {
+        using type = CCLeft_2;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CCRight_1
+    {
+        using type = CCRight_1;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CCCLeft_1
+    {
+        using type = CCCLeft_1;
+        static void Run()
+        {
+           std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
+    struct CCCRight_1
+    {
+        using type = CCCRight_1;
+        static void Run()
+        {
+            std::cerr << "Root = " << typeid(type).name() << "\n";
+        };
+    };
 
     // CYCLIC TEST
     struct E_1{};

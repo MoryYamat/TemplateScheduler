@@ -65,6 +65,13 @@ namespace tsr
     using TP_N4 = Node<TP_4>;
     using TP_N5 = Node<TP_5>;
 
+    // test
+    using TP_Arc_0 = Arc<TP_N2, TP_N1>;
+    using TP_Arc_1 = Arc<TP_N0, TP_Arc_0>;
+    using TP_Arc_2 = Arc<TP_NR, TP_Arc_1>;
+    struct TPGraphTag{};
+    using TP_Graph = Graph<TPGraphTag, TP_Arc_2>;
+
     // CYCLIC TEST
     using Cy_N_1 = Node<E_1>;
     using Cy_N_2 = Node<E_2>;

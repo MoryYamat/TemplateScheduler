@@ -393,6 +393,7 @@ namespace tsr
     };
     // ======================================================================================================================================
 
+    
     // ==================== Topological Sort ======================
     template <typename Pack, typename T>
     struct ContainsInPack;
@@ -617,6 +618,10 @@ namespace tsr
         // Collect nodes that do not have a preceding node
         using ready = typename CollectReadyNodes<NodePack<RemainingNodeTs...>, RemainingRelationPackT, Direction>::type;
 
+        // simple detection of the graph cylcle or non-topologically sotrtable
+        static_assert(!std::is_same_v<ready, NodePack<>>, "Cycle detected or graph is not topologically sortable");
+
+
         using next_order = typename ConcatNodePack<OrderPackT, ready>::type; // concat
 
         using next_nodes = typename PruneNodeByNodes<NodePack<>, ready, NodePack<RemainingNodeTs...>>::type;
@@ -637,29 +642,17 @@ namespace tsr
       using type = typename TopologicalSortImpl<NodePack<>/*initial order*/, nodes, relations, Direction>::type;
     };
 
-    // Conversion from a partial order to a linear order
-    template <typename GraphT, ResolverDirection Direction = ResolverDirection::RootFirst>
-    struct TopologicalOrder
+    // ====================== Execute Order =======================
+    template<typename NodePackT>
+    struct ExecuteOrder;
+    template<typename... NodeTs>
+    struct ExecuteOrder<NodePack<Node<NodeTs>...>>
     {
-        using relations = typename GraphT::relations;         // Create a set of relations from a graph.
-        using nodes = typename CollectNodes<relations>::type; // Create a set of nodes from a relation.
-        // using type = NodePack<TopologicalSort<relations, Direction>>;
-
-        static void Print()
+        static void Run()
         {
-            std::cerr << typeid(nodes).name() << "\n\n";
-            // TopologicalSort<relations, Direction>::Print();
-        }
+            (NodeTs::Run(),...);
+        };
     };
-
-    // ============================================================
-
-    // ==================== TOPOLOGICAL SORT ======================
-    // using Order = ResolverOrder<Graph, DependencFirst>::type;
-
-    // ============================================================
-
-    // ====================== REVERSE ORDER =======================
 
     // ============================================================
 
