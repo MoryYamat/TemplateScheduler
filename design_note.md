@@ -240,11 +240,24 @@ Therefore, at least one circular relationship exists among the remaining nodes.
 - I added `ExecuteOrder`, and it worked as expected.
 
 
-
 ### Extensions
 - Extension 0: Supports multiple graphs
 - Extension 1: Supports circular resolution
 
+
+##　Graph hierarchicalization
+- I want to introduce graph hierarchies to resolve the issue of parallel execution of functions at compile time.
+
+### related concepts
+- cache locality
+- SIMD grouping
+- GPU dispatch grouping
+- NUMA aware ordering
+
+
+
 ## Useful technorlogies 
 
 - compile-time DAG 
+
+

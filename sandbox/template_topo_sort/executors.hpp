@@ -1,0 +1,132 @@
+#pragma once
+
+#include <iostream>
+
+#include "tsr/execution/executor.hpp"
+#include "components.hpp"
+
+namespace tsr
+{
+    // All ctx objects passed in a single ExecuteOrder<Order>::Run(ctx) call are of the same type and instance.
+    // RuntimeContext ctx{};
+    // ExecuteOrder<Order>::Run(ctx);
+    // struct RuntimeContext
+    // {
+    //     World& world;
+    //     float delta_time;
+    //     Logger* logger;
+    // };
+    // - ctx.world
+    // - ctx.logger
+    // ... 
+    struct Context
+    {
+    };
+
+    template <>
+    struct Executor<Root>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "Root\n";
+        }
+    };
+
+    // template <>
+    // struct Executor<Physics>
+    // {
+    //     template <typename Context>
+    //     static void Run(Context& ctx)
+    //     {
+    //         if constexpr (requires { ctx.world; })
+    //         {
+    //             // runtime execution
+    //         }
+    //         if constexpr (requires { ctx.logger; })
+    //         {
+    //             // validation mode
+    //         }
+    //     }
+    // };
+
+    template <>
+    struct Executor<CLeft_1>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CLeft_1\n";
+        }
+    };
+
+    template <>
+    struct Executor<CRight_1>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CRight_1\n";
+        }
+    };
+
+    template <>
+    struct Executor<CRight_2>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CRight_2\n";
+        }
+    };
+
+    template <>
+    struct Executor<CCLeft_1>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CCLeft_1\n";
+        }
+    };
+
+    template <>
+    struct Executor<CCLeft_2>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CCLeft_2\n";
+        }
+    };
+
+    template <>
+    struct Executor<CCRight_1>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CCRight_1\n";
+        }
+    };
+
+    template <>
+    struct Executor<CCCLeft_1>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CCCLeft_1\n";
+        }
+    };
+
+    template <>
+    struct Executor<CCCRight_1>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CCCRight_1\n";
+        }
+    };
+} // namespace tsr

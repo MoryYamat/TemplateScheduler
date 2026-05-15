@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Component.h"
-#include "HierarchyConstructor.h"
+#include "components.hpp"
+#include "tsr/graph/graph_dsl.hpp"
 
 namespace tsr
 {

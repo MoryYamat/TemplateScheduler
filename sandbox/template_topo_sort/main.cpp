@@ -1,35 +1,38 @@
 #include <iostream>
 
-#include "ComponentHierarchyDescription.h"
-#include "HierarchyConstructor.h"
+#include "graph_description.hpp"
+#include "tsr/graph/graph_dsl.hpp"
+#include "tsr/compiler/topological_sort.hpp"
+// #include "executor.hpp"
 
+#include "executors.hpp"
 // build compile time dag
 
 int main()
 {
     using namespace tsr;
 
-    std::cerr << "\n====== Ontology ========\n";
-    ResolveOrder<Ontology_PysGraph>::Resolve();
+    // std::cerr << "\n====== Ontology ========\n";
+    // ResolveOrder<Ontology_PysGraph>::Resolve();
 
-    std::cerr << "\n====== Task Dependency ========\n";
-    ResolveOrder<TaskDepndency_PysGraph>::Resolve();
+    // std::cerr << "\n====== Task Dependency ========\n";
+    // ResolveOrder<TaskDepndency_PysGraph>::Resolve();
 
 
-    // 
-    std::cerr << "\n====== Resolve Dependencies in the specified order ======\n";
+    // // 
+    // std::cerr << "\n====== Resolve Dependencies in the specified order ======\n";
 
-    std::cerr << "======= Root First ======= \n";
-    ResolveOrder<Ontology_PysGraph, ResolverDirection::RootFirst>::Resolve();
+    // std::cerr << "======= Root First ======= \n";
+    // ResolveOrder<Ontology_PysGraph, ResolverDirection::RootFirst>::Resolve();
 
     
-    std::cerr << "======= Leaf First ======= \n";
-    ResolveOrder<Ontology_PysGraph, ResolverDirection::LeafFirst>::Resolve();
+    // std::cerr << "======= Leaf First ======= \n";
+    // ResolveOrder<Ontology_PysGraph, ResolverDirection::LeafFirst>::Resolve();
 
-    std::cerr << "\n ======= ResolverDirection TEST ======= \n";
-    ResolveOrder<TestGraph, ResolverDirection::RootFirst>::Resolve(0);
-    std::cerr << "\n";
-    ResolveOrder<TestGraph, ResolverDirection::LeafFirst>::Resolve(0);
+    // std::cerr << "\n ======= ResolverDirection TEST ======= \n";
+    // ResolveOrder<TestGraph, ResolverDirection::RootFirst>::Resolve(0);
+    // std::cerr << "\n";
+    // ResolveOrder<TestGraph, ResolverDirection::LeafFirst>::Resolve(0);
 
 
     std::cerr << "\n ===== HasPredecessor ==== \n";
@@ -98,8 +101,9 @@ int main()
     std::cerr << "prune_nodes_by_node_1_Result = " << typeid(prune_nodes_by_nodes_1).name() << "\n";// NodePack<TP_N0, TP_N1, TP_N2, TP_N3>
 
     std::cerr << "\n ============= TOPOLOGICAL SORT ========== \n";
-    using topological_sort_1 = TopologicalSort<TestGraph, ResolverDirection::RootFirst>::type;
-    using topological_sort_2 = TopologicalSort<TestGraph, ResolverDirection::LeafFirst>::type;
+    using IR_TestGraph = typename Lower<TestGraph>::type;           // ############# Explicitly convert to IR ############# 
+    using topological_sort_1 = TopologicalSort<IR_TestGraph, ResolverDirection::RootFirst>::type;
+    using topological_sort_2 = TopologicalSort<IR_TestGraph, ResolverDirection::LeafFirst>::type;
     std::cerr << "topological_sort_1_Result = " << typeid(topological_sort_1).name() << "\n";
     std::cerr << "\ntopological_sort_2_Result = " << typeid(topological_sort_2).name() << "\n";
 
@@ -109,13 +113,18 @@ int main()
     // using topological_sort_cyclic_2 = TopologicalSort<Cy_Graph, ResolverDirection::LeafFirst>::type;
 
     std::cerr << "\n ============== Exectution Order Test ========= \n";
-    ExecuteOrder<topological_sort_1>::Run();
+    Context ctx{};
+    std::cerr << "\n RootFirst:";
+    ExecuteOrder<topological_sort_1>::Run(ctx);
+
+    std::cerr << "\n LeafFirst:";
+    ExecuteOrder<topological_sort_2>::Run(ctx);
 
     //R_Test::Print();
     // Type Force Checker (force instanciation)
     // using ForceCheck = typename Ontology_PysGraph::element_types;
     // using ForceCheck = typename TestGraph::element_types;
-    using ForceCheck = typename TestGraph::relations;
+    // using ForceCheck = typename TestGraph::relations;
     // using ForceCheck_Arc = typename A_CCRight::branches;// OK
     // using ForceCheck_Arc = typename A_CCRight_Error::branches;
     // using ForceCheck_Arc = typename A_CCRithg_Error_Dup::branches;
