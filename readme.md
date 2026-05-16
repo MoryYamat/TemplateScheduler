@@ -21,3 +21,38 @@ Its core is a non-invasive type-level directed graph DSL and compiler pipeline f
 - 3. Do not embed macros in the target type.
 - 4. Connect from the outside using traits/specialization/adapter.
 - 5. Execution method can also be defined externally using Executor<T>.
+
+
+## Core Semantic Assumptions
+
+- `Node<T>` is the canonical semantic unit.
+- All graph elements are represented through `Node<>`
+-The system is non-invasive:  
+user-defined types are never modified or inherited from frame work types.
+- `Arc<Parent, Children...>` represents asymmetric relations.
+- The meaning of an edge is intentionally abstract:  
+dependency execution order, ownership, precedence, etc.
+- Immediate bidirectional edges are invalid
+- Cyclic relations are currently rejected, but future policies may allow controlled cycle resolution.
+- `Graph<Tag, ...>` represents a collection of semantic relations.
+- Multiple disconnected roots are allowed.
+- `Node<Graph<...>>` is the canonical form for hierarchical graphs / meta-graphs.
+
+## Canonical Forms
+
+### Sequential execution plan
+```
+SequentialPlan<NodePack<...>>
+```
+
+### Hierarchical execution plan
+```
+HierarchicalPlan<
+    MetaPlan,
+    SubPlanPack<...>>
+```
+
+### Meta-graph node
+```
+Node<Graph<...>>
+```

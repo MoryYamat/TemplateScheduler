@@ -11,7 +11,7 @@ A pass that generates NodePack<...> in execution order from IR.
 
 namespace tsr
 {
-// ==================== Topological Sort ======================
+    // ==================== Topological Sort ======================
     template <typename Pack, typename T>
     struct ContainsInPack;
     template <typename... Nodes, typename NodeT>
@@ -216,6 +216,7 @@ namespace tsr
     {
         using next_result = std::conditional_t<ShouldRemoveNode<FirstNodeT, ReadyNodePackT>::value, ResultPackT,
                                                typename AppendNode<ResultPackT, FirstNodeT>::type>;
+
         using type = typename PruneNodeByNodes<next_result, ReadyNodePackT, NodePack<RestNodeTs...>>::type;
     };
 
@@ -228,14 +229,17 @@ namespace tsr
         using type = NodePack<OrderedNodeTs..., ReadyNodeTs...>;
     };
 
-    template <typename OrderPackT /*Confirmed topo order*/, typename RemainingNodePackT,typename RemainingRelationPackT, ResolverDirection Direction>
+    template <typename OrderPackT /*Confirmed topo order*/, typename RemainingNodePackT,
+              typename RemainingRelationPackT, ResolverDirection Direction>
     struct TopologicalSortImpl;
-    template <typename OrderPackT /*Confirmed topo order*/, typename RemainingRelationPackT,ResolverDirection Direction>
-    struct TopologicalSortImpl<OrderPackT, NodePack<>, RemainingRelationPackT, Direction>// termination condition
+    template <typename OrderPackT /*Confirmed topo order*/, typename RemainingRelationPackT,
+              ResolverDirection Direction>
+    struct TopologicalSortImpl<OrderPackT, NodePack<>, RemainingRelationPackT, Direction> // termination condition
     {
         using type = OrderPackT;
     };
-    template <typename OrderPackT /*Confirmed topo order*/, typename... RemainingNodeTs, typename RemainingRelationPackT, ResolverDirection Direction>
+    template <typename OrderPackT /*Confirmed topo order*/, typename... RemainingNodeTs,
+              typename RemainingRelationPackT, ResolverDirection Direction>
     struct TopologicalSortImpl<OrderPackT, NodePack<RemainingNodeTs...>, RemainingRelationPackT, Direction>
     {
         // Collect nodes that do not have a preceding node
@@ -243,7 +247,6 @@ namespace tsr
 
         // simple detection of the graph cylcle or non-topologically sotrtable
         static_assert(!std::is_same_v<ready, NodePack<>>, "Cycle detected or graph is not topologically sortable");
-
 
         using next_order = typename ConcatNodePack<OrderPackT, ready>::type; // concat
 
@@ -254,7 +257,6 @@ namespace tsr
         using type = typename TopologicalSortImpl<next_order, next_nodes, next_relations, Direction>::type;
     };
 
-
     template <typename GraphIRT, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct TopologicalSort
     {
@@ -262,7 +264,121 @@ namespace tsr
         using nodes = typename CollectNodes<relations>::type;
 
         // topological sort
-      using type = typename TopologicalSortImpl<NodePack<>/*initial order*/, nodes, relations, Direction>::type;
+        using type = typename TopologicalSortImpl<NodePack<> /*initial order*/, nodes, relations, Direction>::type;
     };
 
-}
+    // ================================================================ SEMANTICS ================================================================
+    // PLAN [OUTPUT REPRESENTATION]
+    // @brief Compiler Output, which means sequential execution
+    template <typename NodeT>
+    struct SequentialPlan;
+    template <typename... NodeTs>
+    struct SequentialPlan<NodePack<NodeTs...>>
+    {
+        using type = NodePack<NodeTs...>;
+    };
+
+    // @brief Planning the execution of parallel layers
+    template <typename... PlanTs>
+    struct LayeredPlan;
+
+    // GraphIRT -> SequentialPlan<NodePack<Node<>,Node<>,...>>
+    template <typename GraphIRT, ResolverDirection Direction>
+    struct MakeSequentialPlanFromIR
+    {
+        using relations = typename GraphIRT::relations;
+        using nodes = typename CollectNodes<relations>::type;
+
+        using type = SequentialPlan<typename TopologicalSortImpl<NodePack<>, nodes, relations, Direction>::type>;
+    };
+
+    template <typename GraphT, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct MakeSequentialPlan
+    {
+        using ir_graph = typename Lower<GraphT>::type;
+        using type = typename MakeSequentialPlanFromIR<ir_graph, Direction>::type;
+    };
+
+    template <typename Tag, typename RelationPackT, ResolverDirection Direction>
+    struct MakeSequentialPlan<GraphIR<Tag, RelationPackT>, Direction>
+    {
+        using type = typename MakeSequentialPlanFromIR<GraphIR<Tag, RelationPackT>, Direction>::type;
+    };
+
+    // @brief: Representing a plan using subgraphs in the case of a multi-layered graph
+    template <typename GraphTag, typename GraphT, typename PlanT>
+    struct SubPlan
+    {
+        using tag_type = GraphTag;
+        using graph_type = GraphT;
+        using plan_type = PlanT;
+    };
+
+    // Graph<Tag, ElemenTs..., Direction> -> SubPlan<Graph<Tag, ElemenTs....>, SequentialPlan<Nodepack<Node<...>>>
+    template <typename GraphT, ResolverDirection Direction>
+    struct MakeSubPlan;
+    template <typename GraphTag, ElementType... ElementTs, ResolverDirection Direction>
+    struct MakeSubPlan<Graph<GraphTag, ElementTs...>, Direction>
+    {
+        using graph_type = Graph<GraphTag, ElementTs...>;
+
+        using ir = Lower<Graph<GraphTag, ElementTs...>>;
+        using plan_type = typename MakeSequentialPlan<typename ir::type, Direction>::type;
+
+        using type = SubPlan<typename ir::tag, graph_type, plan_type>;
+    };
+
+    // @brief A hierarchical execution plan
+    template <typename MetaPlan, typename SubPlanPackT>
+    struct HierarchicalPlan
+    {
+        using meta_plan_type = MetaPlan;
+        using sub_plan_pack_type = SubPlanPackT;
+    };
+
+    // thin wrapper
+    template <typename... PlanTs>
+    struct SubPlanPack
+    {
+    };
+    template <typename... GraphTs>
+    struct GraphPack
+    {
+    };
+
+    // append
+    template <typename ResultPack, typename... PlanTs>
+    struct AppendSubPlan;
+    template <typename... ExistingTs, typename... PlanTs>
+    struct AppendSubPlan<SubPlanPack<ExistingTs...>, PlanTs...>
+    {
+        using type = SubPlanPack<ExistingTs..., PlanTs...>;
+    };
+
+    template<typename MetaPlanT, ResolverDirection Direction>
+    struct MakeSubPlanPackFromMetaPlan;
+
+    template<typename... GraphTs, ResolverDirection Direction>
+    struct MakeSubPlanPackFromMetaPlan<SequentialPlan<NodePack<Node<GraphTs>...>>, Direction>
+    {
+        using type = SubPlanPack<typename MakeSubPlan<GraphTs, Direction>::type...>;
+    };
+
+    template<typename MetaGraphT, ResolverDirection Direction>
+    struct MakeHierarchicalPlan
+    {
+        using meta_ir = typename Lower<MetaGraphT>::type;
+        using meta_plan = typename MakeSequentialPlan<meta_ir, Direction>::type;
+
+        using sub_plan_pack = typename MakeSubPlanPackFromMetaPlan<meta_plan, Direction>::type;
+        using type = HierarchicalPlan<meta_plan, sub_plan_pack>;
+    };
+
+} // namespace tsr
+
+// HierarchicalPlan<
+//     SequentialPlan<NodePack<Node<GG_A_Graph>, Node<GG_B_Graph>, Node<GG_C_Graph>>>,
+//     SubPlan<GG_A_Graph, SequentialPlan<NodePack<Node<GG_A_R>, Node<GG_A_0>, ...>>>,
+//     SubPlan<GG_B_Graph, SequentialPlan<NodePack<Node<GG_B_R>, Node<GG_B_0>, ...>>>,
+//     SubPlan<GG_C_Graph, SequentialPlan<NodePack<Node<GG_C_R>, Node<GG_C_0>, ...>>>
+// >

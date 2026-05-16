@@ -83,6 +83,7 @@ namespace tsr
     template <typename Tag, ElementType... ElementTs>
     struct Lower<Graph<Tag, ElementTs...>>
     {
+        using tag = Tag;
         using relations = typename Concat<typename ToRelations<ElementTs>::type...>::type;
 
         using type = GraphIR<Tag, relations>;
