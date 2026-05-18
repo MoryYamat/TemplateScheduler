@@ -18,7 +18,7 @@ namespace tsr
     // };
     // - ctx.world
     // - ctx.logger
-    // ... 
+    // ...
     struct Context
     {
     };
@@ -129,4 +129,61 @@ namespace tsr
             std::cerr << "CCCRight_1\n";
         }
     };
+
+    template <>
+    struct Executor<Pos>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "Pos\n";
+        }
+    };
+    template <>
+    struct Executor<Vel>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "Vel\n";
+        }
+    };
+    template <>
+    struct Executor<Acc>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "Acc\n";
+        }
+    };
+    template <>
+    struct Executor<Dis>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "Dis\n";
+        }
+    };
+
+    template <>
+    struct Executor<Collision>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "Collision\n";
+        }
+    };
+    template <>
+    struct Executor<CollisionMask>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            std::cerr << "CollisionMask\n";
+        }
+    };
+
 } // namespace tsr

@@ -1,5 +1,5 @@
 # TShceduler
-
+existing types as semantics
 
 ## Template Execution Order Resolver (Scheduler)
 - resolve compile time or Only once at runtime
@@ -55,4 +55,29 @@ HierarchicalPlan<
 ### Meta-graph node
 ```
 Node<Graph<...>>
+```
+
+## Example
+
+```
+using A = Graph<...>;
+using B = Graph<...>;
+
+using Meta =
+    Graph<
+        MetaTag,
+        Arc<
+            Node<A>,
+            Node<B>
+        >
+    >;
+
+using Plan =
+    MakeHierarchicalPlan<
+        Meta,
+        ResolverDirection::RootFirst,                       // meta graph direction
+        ResolverDirection::LeafFirst                        // sub graph default direction
+
+        GraphDirection<A, ResolverDirection::RootFirst>     // direction override
+    >::type;
 ```
