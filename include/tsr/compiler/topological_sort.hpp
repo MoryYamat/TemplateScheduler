@@ -61,8 +61,8 @@ namespace tsr
 
     enum class ResolverDirection : std::uint32_t
     {
-        RootFirst,
-        LeafFirst
+        RootFirst,      // left-hand priority, root first
+        LeafFirst       // left-hand priority, leaf first
     };
 
     // For Sort Algorithms
@@ -268,6 +268,7 @@ namespace tsr
     };
 
     // ================================================================ SEMANTICS ================================================================
+    // ########### IMPL ########### 
     // PLAN [OUTPUT REPRESENTATION]
     // @brief Compiler Output, which means sequential execution
     template <typename NodeT>
@@ -292,7 +293,7 @@ namespace tsr
         using type = SequentialPlan<typename TopologicalSortImpl<NodePack<>, nodes, relations, Direction>::type>;
     };
 
-    template <typename GraphT, ResolverDirection Direction = ResolverDirection::RootFirst>
+    template <typename GraphT, ResolverDirection Direction>
     struct MakeSequentialPlan
     {
         using ir_graph = typename Lower<GraphT>::type;
@@ -355,25 +356,54 @@ namespace tsr
         using type = SubPlanPack<ExistingTs..., PlanTs...>;
     };
 
-    template<typename MetaPlanT, ResolverDirection Direction>
-    struct MakeSubPlanPackFromMetaPlan;
-
-    template<typename... GraphTs, ResolverDirection Direction>
-    struct MakeSubPlanPackFromMetaPlan<SequentialPlan<NodePack<Node<GraphTs>...>>, Direction>
+    // fwd
+    template<typename GraphT, ResolverDirection Direction>
+    struct GraphDirection;
+    template<typename GraphT, ResolverDirection DefaultDirection, typename... Overrides>
+    struct ResolveGraphDirection
     {
-        using type = SubPlanPack<typename MakeSubPlan<GraphTs, Direction>::type...>;
+        static constexpr ResolverDirection value = DefaultDirection;
+    };
+    template<typename TargetGraphT, ResolverDirection DefaultDirection, typename OverrideGraphT, ResolverDirection OverrideDirection, typename... Rest>
+    struct ResolveGraphDirection<TargetGraphT, DefaultDirection, GraphDirection<OverrideGraphT, OverrideDirection>, Rest...>
+    {
+        static constexpr ResolverDirection value = 
+            std::is_same_v<TargetGraphT, OverrideGraphT>
+                    ? OverrideDirection
+                    : ResolveGraphDirection<
+                            TargetGraphT,
+                            DefaultDirection,
+                            Rest...>
+                            ::value;
     };
 
-    template<typename MetaGraphT, ResolverDirection Direction>
+    template<typename MetaPlanT, ResolverDirection DefaultDirection, typename... Overrides>
+    struct MakeSubPlanPackFromMetaPlan;
+
+    template<typename... GraphTs, ResolverDirection DefaultDirection, typename... Overrides>
+    struct MakeSubPlanPackFromMetaPlan<SequentialPlan<NodePack<Node<GraphTs>...>>, DefaultDirection, Overrides...>
+    {
+        using type = SubPlanPack<typename MakeSubPlan<GraphTs, ResolveGraphDirection<GraphTs, DefaultDirection, Overrides...>::value>::type...>;
+    };
+
+
+    // ########### API ###########
+    template<typename GraphT, ResolverDirection Direction>
+    struct GraphDirection
+    {
+        using graph_type = GraphT;
+        static constexpr ResolverDirection direction = Direction;
+    };
+
+    template<typename MetaGraphT, ResolverDirection MetaDirection/*meta*/, ResolverDirection DefaultSubDirection/*default sub*/, typename... Overrides/*overrides sub graph direction*/>
     struct MakeHierarchicalPlan
     {
         using meta_ir = typename Lower<MetaGraphT>::type;
-        using meta_plan = typename MakeSequentialPlan<meta_ir, Direction>::type;
+        using meta_plan = typename MakeSequentialPlan<meta_ir, MetaDirection>::type;
 
-        using sub_plan_pack = typename MakeSubPlanPackFromMetaPlan<meta_plan, Direction>::type;
+        using sub_plan_pack = typename MakeSubPlanPackFromMetaPlan<meta_plan, DefaultSubDirection, Overrides...>::type;
         using type = HierarchicalPlan<meta_plan, sub_plan_pack>;
     };
-
 } // namespace tsr
 
 // HierarchicalPlan<

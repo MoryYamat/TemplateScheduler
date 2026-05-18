@@ -120,11 +120,12 @@ int main()
     ExecuteOrder<topological_sort_2>::Run(ctx);
 
     std::cerr << "\n ================ Test of Graph of Graphs ===============\n ";
-    using IR_GG_META_GRAPH_meta_plan_RF = typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst>::meta_plan;
-    using IR_GG_META_GRAPH_SubPlanPack_RF = typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst>::type;
-    using IR_GG_META_GRAPH_meta_plan_LF = typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::LeafFirst>::meta_plan;
-    std::cerr << "IR_GG_META_GRAPH_meta_plan_RF: \n" << typeid(IR_GG_META_GRAPH_meta_plan_RF).name() << "\n";// Intermediate results
-    std::cerr << "\nIR_GG_META_GRAPH_SubPlanPack_RF: \n" << typeid(IR_GG_META_GRAPH_SubPlanPack_RF).name() << "\n";// Intermediate results
+    using IR_GG_META_GRAPH_Hierarchical_RFRF = typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst>::type;
+    using IR_GG_META_GRAPH_Hierarchical_RFLF = typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst>::type;
+    using IR_GG_META_GRAPH_Hierarchical_Overrides_LFRF = typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst, GraphDirection<GG_A_Graph, ResolverDirection::LeafFirst>>::type;
+    std::cerr << "IR_GG_META_GRAPH_Hierarchical_RFRF: \n" << typeid(IR_GG_META_GRAPH_Hierarchical_RFRF).name() << "\n";
+    std::cerr << "\nIR_GG_META_GRAPH_Hierarchical_RFLF: \n" << typeid(IR_GG_META_GRAPH_Hierarchical_RFLF).name() << "\n";
+    std::cerr << "\nIR_GG_META_GRAPH_Hierarchical_Overrides_LFRF: \n" << typeid(IR_GG_META_GRAPH_Hierarchical_Overrides_LFRF).name() << "\n";
     // std::cerr << "\nGG_A_Graph : \n"  << typeid(TopologicalSort<Lower<GG_A_Graph>::type, ResolverDirection::RootFirst>::type).name() << "\n";
     // std::cerr << "\nIR_GG_META_GRAPH_meta_plan_LF: \n" << typeid(IR_GG_META_GRAPH_meta_plan_LF).name() << "\n";// Intermediate results
      
