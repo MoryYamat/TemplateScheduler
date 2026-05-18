@@ -26,7 +26,7 @@ namespace tsr
     template <>
     struct Executor<Root>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy MissingPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "Root\n";
@@ -53,7 +53,7 @@ namespace tsr
     template <>
     struct Executor<CLeft_1>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CLeft_1\n";
@@ -63,7 +63,7 @@ namespace tsr
     template <>
     struct Executor<CRight_1>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CRight_1\n";
@@ -73,7 +73,7 @@ namespace tsr
     template <>
     struct Executor<CRight_2>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CRight_2\n";
@@ -83,7 +83,7 @@ namespace tsr
     template <>
     struct Executor<CCLeft_1>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CCLeft_1\n";
@@ -93,7 +93,7 @@ namespace tsr
     template <>
     struct Executor<CCLeft_2>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CCLeft_2\n";
@@ -103,7 +103,7 @@ namespace tsr
     template <>
     struct Executor<CCRight_1>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CCRight_1\n";
@@ -113,7 +113,7 @@ namespace tsr
     template <>
     struct Executor<CCCLeft_1>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CCCLeft_1\n";
@@ -123,7 +123,7 @@ namespace tsr
     template <>
     struct Executor<CCCRight_1>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "CCCRight_1\n";
@@ -133,7 +133,7 @@ namespace tsr
     template <>
     struct Executor<Pos>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "Pos\n";
@@ -142,7 +142,7 @@ namespace tsr
     template <>
     struct Executor<Vel>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "Vel\n";
@@ -151,7 +151,7 @@ namespace tsr
     template <>
     struct Executor<Acc>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "Acc\n";
@@ -160,7 +160,7 @@ namespace tsr
     template <>
     struct Executor<Dis>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "Dis\n";
@@ -170,20 +170,20 @@ namespace tsr
     template <>
     struct Executor<Collision>
     {
-        template <typename Context>
+        template <MissingExecutorPolicy, typename Context>
         static void Run(Context& context)
         {
             std::cerr << "Collision\n";
         }
     };
-    template <>
-    struct Executor<CollisionMask>
-    {
-        template <typename Context>
-        static void Run(Context& context)
-        {
-            std::cerr << "CollisionMask\n";
-        }
-    };
+    // template <>
+    // struct Executor<CollisionMask>
+    // {
+    //     template <typename Context>
+    //     static void Run(Context& context)
+    //     {
+    //         std::cerr << "CollisionMask\n";
+    //     }
+    // };
 
 } // namespace tsr

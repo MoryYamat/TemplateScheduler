@@ -81,3 +81,23 @@ using Plan =
         GraphDirection<A, ResolverDirection::RootFirst>     // direction override
     >::type;
 ```
+
+
+### Execution Definition
+- User-specific functions can be defined in one of the following formats 
+- if multiple exist, partial specializations are used, with the one for which a Context exists taking precedence.
+```
+struct A {
+    static void Run() {}
+};
+
+struct B {
+    static void Run(Context&) {}
+};
+
+template <>
+struct Executor<C> {
+    template <typename Context>
+    static void Run(Context&) {}
+};
+```

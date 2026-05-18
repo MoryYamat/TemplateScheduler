@@ -6,99 +6,109 @@ An execution platform for actually using the compiler's output.
 */
 
 #pragma once
+#include <iostream>
+// #include "tsr/graph/graph_dsl.hpp"
+// #include "tsr/compiler/topological_sort.hpp" // Delete the hierarchical DSL IR once it has been created.
 
-#include "tsr/graph/graph_dsl.hpp"
-#include "tsr/compiler/topological_sort.hpp" // Delete the hierarchical DSL IR once it has been created.
+#include "tsr/plan/plan.hpp"
 
 namespace tsr
 {
+    // =========================================== Policy ===========================================
+    enum class MissingExecutorPolicy
+    {
+        Assert,
+        Skip,
+        Warn
+    };
+
+    // =========================================== Validations ===========================================
+    template <typename T, typename Context>
+    concept HasStaticRunWithContext = requires(Context& ctx) { T::Run(ctx); };
+    template <typename T>
+    concept HasStaticRunNoContext = requires { T::Run(); };
+
     template <typename>
     inline constexpr bool always_false_executor_v = false;
 
     template <typename T>
     struct Executor
     {
-        static_assert(always_false_executor_v<T>, "Executor<T> specialization is missing");
+        template <MissingExecutorPolicy MissingPolicy = MissingExecutorPolicy::Assert, typename Context>
+        static void Run(Context& context)
+        {
+            if constexpr (HasStaticRunWithContext<T, Context>)
+            {
+                T::Run(context);
+            }
+            else if constexpr (HasStaticRunNoContext<T>)
+            {
+                T::Run();
+            }
+            else
+            {
+                if constexpr (MissingPolicy == MissingExecutorPolicy::Assert)
+                {
+                    static_assert(always_false_executor_v<T>,
+                                  "Executor<T> specialization is missing, and T has no static Run");
+                }
+                else if constexpr (MissingPolicy == MissingExecutorPolicy::Skip)
+                {
+                    // no-op
+                }
+                else if constexpr (MissingPolicy == MissingExecutorPolicy::Warn)
+                {
+                    std::cerr << "[tsr] warning: missing executor; skipped\n";
+                }
+            }
+        }
     };
-    
-    // ====================== Execute Order =======================
+
+    // ============================================ Execute Order =============================================
     template <typename NodePackT>
     struct ExecuteOrder;
+
     template <typename... NodeTs>
     struct ExecuteOrder<NodePack<Node<NodeTs>...>>
     {
         template <typename Context>
         static void Run(Context& context)
         {
-            (Executor<NodeTs>::Run(context), ...);
+            (Executor<NodeTs>::template Run<MissingExecutorPolicy::Assert>(context), ...);
         }
     };
 
-    // ====================== Execute Plan =======================
-    template <typename PlanT>
+    // ============================================ Execute Plan =============================================
+    template <typename PlanT, MissingExecutorPolicy MissingPolicy = MissingExecutorPolicy::Assert>
     struct ExecutePlan;
-    template <typename... NodeTs>
-    struct ExecutePlan<SequentialPlan<NodePack<Node<NodeTs>...>>>
+    template <typename... NodeTs, MissingExecutorPolicy MissingPolicy>
+    struct ExecutePlan<SequentialPlan<NodePack<Node<NodeTs>...>>, MissingPolicy>
     {
         template <typename Context>
         static void Run(Context& context)
         {
-            (Executor<NodeTs>::Run(context), ...);
+            (Executor<NodeTs>::template Run<MissingPolicy>(context), ...);
         }
     };
 
-    // ====================== Execute HierarchicalPlan =======================
-    // find and match the metaplan
-    template <typename>
-    inline constexpr bool always_false_v = false;
-
-    template <typename GraphT, typename SubPlanPackT>
-    struct FindSubPlan;
-    template <typename GraphT>
-    struct FindSubPlan<GraphT, SubPlanPack<>>
-    {
-        static_assert(always_false_v<GraphT>, "SubPlan for GraphT was not found in SubPlanPack");
-    };
-
-    template <bool Match, typename GraphT, typename FirstSubPlan, typename... Rest>
-    struct FindSubPlanImpl;
-    template <typename GraphT, typename FirstSubPlan, typename... Rest>
-    struct FindSubPlanImpl<true, GraphT, FirstSubPlan, Rest...>
-    {
-        using type = FirstSubPlan;
-    };
-    template <typename GraphT, typename FirstSubPlan, typename... Rest>
-    struct FindSubPlanImpl<false, GraphT, FirstSubPlan, Rest...>
-    {
-        using type = typename FindSubPlan<GraphT, SubPlanPack<Rest...>>::type;
-    };
-
-    template <typename GraphT, typename FirstSubPlan, typename... Rest>
-    struct FindSubPlan<GraphT, SubPlanPack<FirstSubPlan, Rest...>>
-        : FindSubPlanImpl<std::is_same_v<GraphT, typename FirstSubPlan::graph_type>, GraphT, FirstSubPlan, Rest...>
-    {
-    };
-
-    template <typename MetaPlanT, typename SubPlanPackT>
+    template <typename MetaPlanT, typename SubPlanPackT, MissingExecutorPolicy MissingPolicy>
     struct ExecuteHierarchicalPlan;
-    template <typename... GraphTs, typename SubPlanPackT>
-    struct ExecuteHierarchicalPlan<SequentialPlan<NodePack<Node<GraphTs>...>>, SubPlanPackT>
+    template <typename... GraphTs, typename SubPlanPackT, MissingExecutorPolicy MissingPolicy>
+    struct ExecuteHierarchicalPlan<SequentialPlan<NodePack<Node<GraphTs>...>>, SubPlanPackT, MissingPolicy>
     {
         template <typename Context>
         static void Run(Context& context)
         {
-            (ExecutePlan<typename FindSubPlan<GraphTs, SubPlanPackT>::type::plan_type>::Run(context), ...);
+            (ExecutePlan<typename FindSubPlan<GraphTs, SubPlanPackT>::type::plan_type, MissingPolicy>::Run(context), ...);
         }
     };
-
-    // ====================== Execute Plan =======================
-    template <typename MetaPlanT, typename SubPlanPackT>
-    struct ExecutePlan<HierarchicalPlan<MetaPlanT, SubPlanPackT>>
+    template <typename MetaPlanT, typename SubPlanPackT, MissingExecutorPolicy MissingPolicy>
+    struct ExecutePlan<HierarchicalPlan<MetaPlanT, SubPlanPackT>, MissingPolicy>
     {
         template <typename Context>
         static void Run(Context& context)
         {
-            ExecuteHierarchicalPlan<MetaPlanT, SubPlanPackT>::Run(context);
+            ExecuteHierarchicalPlan<MetaPlanT, SubPlanPackT, MissingPolicy>::Run(context);
         }
     };
 }; // namespace tsr

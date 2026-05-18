@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <iostream>
 
 namespace tsr
 {
@@ -37,6 +38,11 @@ namespace tsr
     struct CollisionMask
     {
         std::uint32_t mask{};
+
+        static void Run()
+        {
+            std::cerr << "CollisionMask\n";
+        }
     };
 
     //TEST

@@ -178,16 +178,16 @@ int main()
 
     using GraphB = tsr::Graph<BTag, tsr::Arc<tsr::Node<B0>, tsr::Node<B1>>>;
 
-    //  Meta graph 
+    //  Meta graph
     using MetaGraph = tsr::Graph<MetaTag, tsr::Arc<tsr::Node<GraphA>, tsr::Node<GraphB>>>;
 
-    //  Expected 
+    //  Expected
     using ExpectedMetaPlan = tsr::HierarchicalPlan<
         tsr::SequentialPlan<tsr::NodePack<tsr::Node<GraphA>, tsr::Node<GraphB>>>,
         tsr::SubPlanPack<tsr::SubPlan<ATag, GraphA, tsr::SequentialPlan<tsr::NodePack<tsr::Node<A0>, tsr::Node<A1>>>>,
                          tsr::SubPlan<BTag, GraphB, tsr::SequentialPlan<tsr::NodePack<tsr::Node<B0>, tsr::Node<B1>>>>>>;
 
-    // Actual 
+    // Actual
     using ActualMetaPlan = typename tsr::MakeHierarchicalPlan<MetaGraph, tsr::ResolverDirection::RootFirst,
                                                               tsr::ResolverDirection::RootFirst>::type;
 
@@ -195,56 +195,51 @@ int main()
     static_assert(std::is_same_v<ActualMetaPlan, ExpectedMetaPlan>, "MakeHierarchicalPlan RootFirst/RootFirst failed");
     // ----------------------------------------------------------------------------------------------------
 
-
     // ----------------------------------------- Test For Hierarchical Plan -----------------------------------------
     std::cerr << "\n ================== Executing Hierarchical Plan Tests ================== \n";
-    using PysDomainHierarchicalPlan = MakeHierarchicalPlan<PhysMetaGraph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst>::type;
-    ExecutePlan<PysDomainHierarchicalPlan>::Run(ctx);
-    // ######## Exepected ######## 
-    using ExpectedPysMetaPlan =
-    SequentialPlan<
-        NodePack<
-            Node<Ontology_PhysGraph>,
-            Node<Ontology_CollGraph>
-        >
-    >;
-    using ExepectedPhysicsSubPlan = 
-        SubPlan<
-            PhysTag,
-            Ontology_PhysGraph,
-            SequentialPlan<
-                NodePack<
-                    Node<Dis>,
-                    Node<Acc>,
-                    Node<Vel>,
-                    Node<Pos>
-                >
-            >
-        >;
+    using PysDomainHierarchicalPlan =
+        MakeHierarchicalPlan<PhysMetaGraph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst>::type;
+    ExecutePlan<PysDomainHierarchicalPlan, MissingExecutorPolicy::Warn>::Run(ctx);
+    // ######## Exepected ########
+    using ExpectedPysMetaPlan = SequentialPlan<NodePack<Node<Ontology_PhysGraph>, Node<Ontology_CollGraph>>>;
+    using ExepectedPhysicsSubPlan =
+        SubPlan<PhysTag, Ontology_PhysGraph, SequentialPlan<NodePack<Node<Dis>, Node<Acc>, Node<Vel>, Node<Pos>>>>;
     using ExepectedCollisionSubPlan =
-        SubPlan<
-            CollTag,
-            Ontology_CollGraph,
-            SequentialPlan<
-                NodePack<
-                    Node<CollisionMask>,
-                    Node<Collision>
-                >
-            >
-        >;
+        SubPlan<CollTag, Ontology_CollGraph, SequentialPlan<NodePack<Node<CollisionMask>, Node<Collision>>>>;
 
-    using ExpectedPhyDomainPlan = 
-        HierarchicalPlan<
-            ExpectedPysMetaPlan,
-            SubPlanPack<
-                    ExepectedPhysicsSubPlan,
-                    ExepectedCollisionSubPlan
-                    >
-        >;
+    using ExpectedPhyDomainPlan =
+        HierarchicalPlan<ExpectedPysMetaPlan, SubPlanPack<ExepectedPhysicsSubPlan, ExepectedCollisionSubPlan>>;
     static_assert(std::is_same_v<PysDomainHierarchicalPlan, ExpectedPhyDomainPlan>, "Hierarchical plan mismatch");
 
+    // fallback static Run() を持つ Executor 特殊化なしで実行可能
+    struct HasRunNoCtx
+    {
+        static void Run() {}
+    };
+    static_assert(HasStaticRunNoContext<HasRunNoCtx>);
+    // fallback: static Run(Context&)
+    struct HasRunCtx
+    {
+        static void Run(Context&) {}
+    };
+    static_assert(HasStaticRunWithContext<HasRunCtx, Context>);
+    // 3. Runを持たない型は検出されない
+    struct NoRun
+    {
+    };
+    static_assert(!HasStaticRunNoContext<NoRun>);
+    static_assert(!HasStaticRunWithContext<NoRun, tsr::Context>);
+    // Test ExecutePlan with MissingPolicy
+    using WarnPlan = 
+        SequentialPlan<
+            NodePack<
+                Node<NoRun>,
+                Node<HasRunNoCtx>,
+                Node<HasRunCtx>
+            >
+        >;
+    ExecutePlan<WarnPlan, MissingExecutorPolicy::Warn>::Run(ctx);
 
-    
     // std::cerr << "\nGG_A_Graph : \n"  << typeid(TopologicalSort<Lower<GG_A_Graph>::type, ResolverDirection::RootFirst>::type).name() << "\n";
     // std::cerr << "\nIR_GG_META_GRAPH_meta_plan_LF: \n" << typeid(IR_GG_META_GRAPH_meta_plan_LF).name() << "\n";// Intermediate results
 
