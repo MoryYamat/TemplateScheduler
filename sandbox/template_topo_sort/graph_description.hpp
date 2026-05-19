@@ -142,8 +142,7 @@ namespace tsr
     struct PhysMetaGraphTag{};
     using PhysMetaGraph = Graph<PhysMetaGraphTag, PhysGraphArc>;
     
-
-
+    
     // handle Graph as Node
     using GG_Graph_A_NR = Node<GG_A_Graph>;
     using GG_Graph_B_N0 = Node<GG_B_Graph>;

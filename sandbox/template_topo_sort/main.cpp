@@ -2,11 +2,15 @@
 
 #include "graph_description.hpp"
 #include "tsr/compiler/topological_sort.hpp"
+#include "tsr/execution/executor.hpp"
 #include "tsr/graph/graph_dsl.hpp"
 // #include "executor.hpp"
 
 #include "executors.hpp"
 // build compile time dag
+
+#include <vector>
+#include <string>
 
 int main()
 {
@@ -131,20 +135,20 @@ int main()
               << typeid(IR_GG_META_GRAPH_Hierarchical_Overrides_LFRF).name() << "\n";
 
     // Test for Sequential Plans
-    struct A
+    struct R
     {
     };
-    struct B
+    struct L1
     {
     };
-    struct C
+    struct L2
     {
     };
     struct Tag
     {
     };
-    using G = Graph<Tag, Arc<Node<A>, Node<B>, Node<C>>>;
-    using Expected = SequentialPlan<NodePack<Node<A>, Node<B>, Node<C>>>;
+    using G = Graph<Tag, Arc<Node<R>, Node<L1>, Node<L2>>>;
+    using Expected = SequentialPlan<NodePack<Node<R>, Node<L1>, Node<L2>>>;
     using Actual = typename MakeSequentialPlan<G, ResolverDirection::RootFirst>::type;
     static_assert(std::is_same_v<Actual, Expected>);
 
@@ -199,7 +203,7 @@ int main()
     std::cerr << "\n ================== Executing Hierarchical Plan Tests ================== \n";
     using PysDomainHierarchicalPlan =
         MakeHierarchicalPlan<PhysMetaGraph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst>::type;
-    ExecutePlan<PysDomainHierarchicalPlan, MissingExecutorPolicy::Warn>::Run(ctx);
+    ExecutePlan<PysDomainHierarchicalPlan, WarnExecutionConfig>::Run(ctx);
     // ######## Exepected ########
     using ExpectedPysMetaPlan = SequentialPlan<NodePack<Node<Ontology_PhysGraph>, Node<Ontology_CollGraph>>>;
     using ExepectedPhysicsSubPlan =
@@ -238,7 +242,27 @@ int main()
                 Node<HasRunCtx>
             >
         >;
-    ExecutePlan<WarnPlan, MissingExecutorPolicy::Warn>::Run(ctx);
+    std::cerr <<"\n === MissingExecutorPolicy TEST === \n";
+    ExecutePlan<WarnPlan, WarnExecutionConfig>::Run(ctx);
+
+    // ====================== DISPATCH PRIORITY TEST ======================
+    std::cerr <<"\n === DISPATCH PRIORITY TEST === \n";
+    using Dispatch_Priority_Test_Plan = SequentialPlan<
+        NodePack<
+            Node<A>,
+            Node<B>,
+            Node<C>,
+            Node<D>
+        >
+    >;
+    TestContext test_ctx{};
+    ExecutePlan<Dispatch_Priority_Test_Plan, WarnExecutionConfig>::Run(test_ctx);
+    static_assert(HasStaticRunNoContext<D>);
+    // for(const auto& u : test_ctx.log)
+    // {
+    //     std::cerr << u << "\n";
+    // }
+    // std::cerr << "D called = " << D::called << "\n";
 
     // std::cerr << "\nGG_A_Graph : \n"  << typeid(TopologicalSort<Lower<GG_A_Graph>::type, ResolverDirection::RootFirst>::type).name() << "\n";
     // std::cerr << "\nIR_GG_META_GRAPH_meta_plan_LF: \n" << typeid(IR_GG_META_GRAPH_meta_plan_LF).name() << "\n";// Intermediate results

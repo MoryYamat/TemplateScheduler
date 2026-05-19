@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace tsr
 {
@@ -112,5 +114,28 @@ namespace tsr
     struct GG_C_3{};
 
 
+    
+    struct TestContext
+    {
+        std::vector<std::string> log;
+    };
 
+    struct A{};
+    struct B{};
+    struct C
+    {
+        static void Run(TestContext& ctx)
+        {
+            ctx.log.push_back("static_context");
+        }
+    };
+    struct D
+    {
+        inline static bool called = false;
+
+        static void Run()
+        {
+            called = true;
+        }
+    };
 } // namespace tsr

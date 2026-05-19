@@ -101,3 +101,8 @@ struct Executor<C> {
     static void Run(Context&) {}
 };
 ```
+
+#### Missing Executor Policy
+- Plan side = Specifies the overall policy for missing executor
+- Executor side = Resolves how each type T should be executed
+- Executor<T> specialization = Overrides the execution method of individual types
