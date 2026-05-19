@@ -111,6 +111,8 @@ using Plan =
         }
     };
 
+
+    // ============== Defining a user `Run` function through partial specialization of `Executor` ============== 
     // By setting ExecutionConfing in ConfigT, you can select how to run the program (Assert/Warn/Skip).
     template<>
     struct Executor<A>
@@ -134,6 +136,6 @@ using Plan =
 ```
 
 #### Missing Executor Policy
-- Plan side = Specifies the overall policy for missing executor
-- Executor side = Resolves how each type T should be executed
-- Executor<T> specialization = Overrides the execution method of individual types
+- DefaultExecutionConfig: `static_assert(UserType<T>::Run())`
+- WarnExecutionConfig: Warning (standard input/output) if `UserType<T>::Run()` is not defined
+- SkipExecutionConfig: Skip execution (do not execute) regardless of whether `UserType<T>::Run()` is defined or not
