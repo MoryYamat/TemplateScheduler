@@ -189,7 +189,7 @@ namespace tsr
     template<>
     struct Executor<A>
     {
-        template<typename ConfigT, typename Context>
+        template<typename ConfigT = DefaultExecutionConfig, typename Context>
         static void Run(Context& ctx)
         {
             ctx.log.push_back("executor_config");

@@ -87,19 +87,50 @@ using Plan =
 - User-specific functions can be defined in one of the following formats 
 - if multiple exist, partial specializations are used, with the one for which a Context exists taking precedence.
 ```
-struct A {
-    static void Run() {}
-};
+    struct TestContext
+    {
+        std::vector<std::string> log;
+    };
 
-struct B {
-    static void Run(Context&) {}
-};
+    struct A{};
+    struct B{};
+    struct C
+    {
+        static void Run(TestContext& ctx)
+        {
+            ctx.log.push_back("static_context");
+        }
+    };
+    struct D
+    {
+        inline static bool called = false;
 
-template <>
-struct Executor<C> {
-    template <typename Context>
-    static void Run(Context&) {}
-};
+        static void Run()
+        {
+            called = true;
+        }
+    };
+
+    // By setting ExecutionConfing in ConfigT, you can select how to run the program (Assert/Warn/Skip).
+    template<>
+    struct Executor<A>
+    {
+        template<typename ConfigT, typename Context>
+        static void Run(Context& ctx)
+        {
+            ctx.log.push_back("executor_config");
+        }
+    };
+
+    template<>
+    struct Executor<B>
+    {
+        template<typename Context>
+        static void Run(Context& ctx)
+        {
+            ctx.log.push_back("executor_plain");
+        }
+    };
 ```
 
 #### Missing Executor Policy

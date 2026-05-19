@@ -258,11 +258,11 @@ int main()
     TestContext test_ctx{};
     ExecutePlan<Dispatch_Priority_Test_Plan, WarnExecutionConfig>::Run(test_ctx);
     static_assert(HasStaticRunNoContext<D>);
-    // for(const auto& u : test_ctx.log)
-    // {
-    //     std::cerr << u << "\n";
-    // }
-    // std::cerr << "D called = " << D::called << "\n";
+    for(const auto& u : test_ctx.log)
+    {
+        std::cerr << u << "\n";
+    }
+    std::cerr << "D called = " << D::called << "\n";
 
     // std::cerr << "\nGG_A_Graph : \n"  << typeid(TopologicalSort<Lower<GG_A_Graph>::type, ResolverDirection::RootFirst>::type).name() << "\n";
     // std::cerr << "\nIR_GG_META_GRAPH_meta_plan_LF: \n" << typeid(IR_GG_META_GRAPH_meta_plan_LF).name() << "\n";// Intermediate results

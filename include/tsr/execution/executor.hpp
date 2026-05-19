@@ -30,6 +30,10 @@ namespace tsr
     {
         static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Warn;
     };
+    struct SkipExecutionConfig
+    {
+        static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Skip;
+    };
 
     // =========================================== Validations ===========================================
     template <typename T, typename Context>
