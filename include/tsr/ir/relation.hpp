@@ -77,6 +77,88 @@ namespace tsr
         using type = typename Concat<direct_type, nested_type>::type; // concat
     };
 
+    // Collect Nodes from DSL
+    // Extract Nodes From DSL
+
+    // To Unique Nodes
+    template <typename TargetNodeT, typename ResultPackT>
+    struct Is_UniqueNode : std::true_type
+    {
+    };
+    template <typename TargetNodeT, typename FirstNodeT, typename... RestNodeTs>
+    struct Is_UniqueNode<TargetNodeT, NodePack<FirstNodeT, RestNodeTs...>>
+        : std::bool_constant<!std::is_same_v<TargetNodeT, FirstNodeT> &&
+                             Is_UniqueNode<TargetNodeT, NodePack<RestNodeTs...>>::value>
+    {
+    };
+    template <typename ResultPackT, typename ElementPackT>
+    struct UniqueNodePackImpl
+    {
+    };
+    template <typename ResultPackT>
+    struct UniqueNodePackImpl<ResultPackT, NodePack<>>
+    {
+        using type = ResultPackT;
+    };
+    template <typename... ResultNodeTs, typename FirstNodeT, typename... RestNodeT>
+    struct UniqueNodePackImpl<NodePack<ResultNodeTs...>, NodePack<FirstNodeT, RestNodeT...>>
+    {
+        using next_result = std::conditional_t<Is_UniqueNode<FirstNodeT, NodePack<ResultNodeTs...>>::value,
+                                               NodePack<ResultNodeTs..., FirstNodeT>, NodePack<ResultNodeTs...>>;
+
+        using type = typename UniqueNodePackImpl<next_result, NodePack<RestNodeT...>>::type;
+    };
+    template <typename NodePackT>
+    struct UniqueNodePack;
+    template <typename... NodeTs>
+    struct UniqueNodePack<NodePack<NodeTs...>>
+    {
+        using type = typename UniqueNodePackImpl<NodePack<>, NodePack<NodeTs...>>::type;
+    };
+
+    // Concat
+    template <typename... Packs>
+    struct ConcatNodePacks;
+    template <>
+    struct ConcatNodePacks<>
+    {
+        using type = NodePack<>;
+    };
+    template <typename... NodeTs>
+    struct ConcatNodePacks<NodePack<NodeTs...>>
+    {
+        using type = NodePack<NodeTs...>;
+    };
+    template <typename... ANodeTs, typename... BNodeTs, typename... RestPacks>
+    struct ConcatNodePacks<NodePack<ANodeTs...>, NodePack<BNodeTs...>, RestPacks...>
+    {
+        using type = typename ConcatNodePacks<NodePack<ANodeTs..., BNodeTs...>, RestPacks...>::type;
+    };
+
+    template <typename ElementTs>
+    struct CollectRawNodesFromElement
+    {
+    };
+    template <typename T>
+    struct CollectRawNodesFromElement<Node<T>>
+    {
+        using type = NodePack<Node<T>>;
+    };
+    template <NodeType RootNodeT, typename... BranchTs>
+    struct CollectRawNodesFromElement<Arc<RootNodeT, BranchTs...>>
+    {
+        using type =
+            typename ConcatNodePacks<NodePack<RootNodeT>, typename CollectRawNodesFromElement<BranchTs>::type...>::type;
+    };
+
+    template <typename GraphT>
+    struct CollectRawNodesFromGraph;
+    template <typename Tag, ElementType... ElementTs>
+    struct CollectRawNodesFromGraph<Graph<Tag, ElementTs...>>
+    {
+        using type = typename ConcatNodePacks<typename CollectRawNodesFromElement<ElementTs>::type...>::type;
+    };
+
     template <typename GraphT>
     struct Lower;
 
@@ -84,9 +166,13 @@ namespace tsr
     struct Lower<Graph<Tag, ElementTs...>>
     {
         using tag = Tag;
-        using relations = typename Concat<typename ToRelations<ElementTs>::type...>::type;
 
-        using type = GraphIR<Tag, relations>;
+        using raw_nodes = typename CollectRawNodesFromGraph<Graph<Tag, ElementTs...>>::type;
+
+        using nodes = typename UniqueNodePack<raw_nodes>::type;
+
+        using relations = typename Concat<typename ToRelations<ElementTs>::type...>::type;
+        using type = GraphIR<Tag, nodes, relations>;
     };
     // ***********************************************************
 } // namespace tsr

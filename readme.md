@@ -1,6 +1,8 @@
 # TShceduler
 existing types as semantics
 
+**semantic graph verifier / planner**
+
 ## Template Execution Order Resolver (Scheduler)
 - resolve compile time or Only once at runtime
 

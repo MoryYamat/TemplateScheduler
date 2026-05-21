@@ -7,6 +7,7 @@
 // #include "executor.hpp"
 
 #include "executors.hpp"
+#include "tsr/ir/relation.hpp"
 // build compile time dag
 
 #include <vector>
@@ -271,6 +272,18 @@ int main()
     // std::cerr << "topo_IR_Test_Meta_Graph_Result = " << typeid(topo_IR_Test_Meta_Graph).name() << "\n";
 
     std::cerr << "\n";
+
+    // ============= Append Unique Nodes From Elements ============
+    using uqniue_nodes_result = Lower<TestGraph>::nodes;
+    std::cerr << "uqniue_nodes_result = " << typeid(uqniue_nodes_result).name() << "\n";
+
+    // ============= For testing Layered Plan =============
+    std::cerr << "\n";
+    std::cerr << "For testing Layered Plan\n";
+
+    // using LayeredPlan_Test = MakeLayeredPlan<LP_G, ResolverDirection::RootFirst>::type;
+    // std::cerr << "LayeredPlan_Test_Result = " = typeid(LayeredPlan_Test).name() << "\n";
+    // ExecutePlan<LayeredPlan_Test, WarnExecutionConfig>::Run(ctx);
 
     // confirmed
     // using test_make_subPlan_RF = typename MakeSubPlan<TestGraph, ResolverDirection::RootFirst>::type;

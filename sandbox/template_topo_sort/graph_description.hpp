@@ -153,4 +153,9 @@ namespace tsr
     {
     };
     using GG_Meta_Graph = Graph<Meta_Graphs_Tag, GG_Graph_Arc>;
+
+
+    // ============= For testing Layered Plan =============
+    using LP_G = Graph<LPTag, Arc<Node<LP_R>,Node<LP_A>, Node<LP_B>>, Arc<Node<LP_C>, Node<LP_A>>>;
+    // expected: LayeredPlan<LayerPack<NodePack<Node<LP_R>>, NodePack<Node<LP_B>,Node<LP_C>>, NodePack<Node<LP_A>>>
 } // namespace tsr

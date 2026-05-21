@@ -114,7 +114,7 @@ namespace tsr
     struct GG_C_3{};
 
 
-    
+    // ============= For testing executor execution priority ============= 
     struct TestContext
     {
         std::vector<std::string> log;
@@ -138,4 +138,11 @@ namespace tsr
             called = true;
         }
     };
+
+    // ============= For testing Layered Plan =============
+    struct LP_R{};
+    struct LP_A{};
+    struct LP_B{};
+    struct LP_C{};
+    struct LPTag{};
 } // namespace tsr
