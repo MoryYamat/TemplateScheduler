@@ -235,31 +235,17 @@ int main()
     static_assert(!HasStaticRunNoContext<NoRun>);
     static_assert(!HasStaticRunWithContext<NoRun, tsr::Context>);
     // Test ExecutePlan with MissingPolicy
-    using WarnPlan = 
-        SequentialPlan<
-            NodePack<
-                Node<NoRun>,
-                Node<HasRunNoCtx>,
-                Node<HasRunCtx>
-            >
-        >;
-    std::cerr <<"\n === MissingExecutorPolicy TEST === \n";
+    using WarnPlan = SequentialPlan<NodePack<Node<NoRun>, Node<HasRunNoCtx>, Node<HasRunCtx>>>;
+    std::cerr << "\n === MissingExecutorPolicy TEST === \n";
     ExecutePlan<WarnPlan, WarnExecutionConfig>::Run(ctx);
 
     // ====================== DISPATCH PRIORITY TEST ======================
-    std::cerr <<"\n === DISPATCH PRIORITY TEST === \n";
-    using Dispatch_Priority_Test_Plan = SequentialPlan<
-        NodePack<
-            Node<A>,
-            Node<B>,
-            Node<C>,
-            Node<D>
-        >
-    >;
+    std::cerr << "\n === DISPATCH PRIORITY TEST === \n";
+    using Dispatch_Priority_Test_Plan = SequentialPlan<NodePack<Node<A>, Node<B>, Node<C>, Node<D>>>;
     TestContext test_ctx{};
     ExecutePlan<Dispatch_Priority_Test_Plan, WarnExecutionConfig>::Run(test_ctx);
     static_assert(HasStaticRunNoContext<D>);
-    for(const auto& u : test_ctx.log)
+    for (const auto& u : test_ctx.log)
     {
         std::cerr << u << "\n";
     }
@@ -274,8 +260,17 @@ int main()
     std::cerr << "\n";
 
     // ============= Append Unique Nodes From Elements ============
-    using uqniue_nodes_result = Lower<TestGraph>::nodes;
-    std::cerr << "uqniue_nodes_result = " << typeid(uqniue_nodes_result).name() << "\n";
+    //using uqniue_nodes_result = Lower<TestGraph>::nodes;
+    using LayeredPlan_Test_RF = typename MakeLayeredPlan<LP_G, ResolverDirection::RootFirst>::type;
+    using LayeredPlan_Test_LF = typename MakeLayeredPlan<LP_G, ResolverDirection::LeafFirst>::type;
+    using LP_G_MakeLayered_RF_Expected = LayeredPlan<LayerPack<NodePack<Node<LP_R>, Node<LP_C>>, NodePack<Node<LP_A>, Node<LP_B>>>>;
+    using LP_G_MakeLayered_LF_Expected = LayeredPlan<LayerPack<NodePack<Node<LP_A>, Node<LP_B>>, NodePack<Node<LP_R>, Node<LP_C>>>>;
+    static_assert(std::is_same_v<LayeredPlan_Test_RF, LP_G_MakeLayered_RF_Expected>);
+    static_assert(std::is_same_v<LayeredPlan_Test_LF, LP_G_MakeLayered_LF_Expected>);
+
+    std::cerr << "LayeredPlan_Test_RF_Result = " << typeid(LayeredPlan_Test_RF).name() << "\n";
+    std::cerr << "\nLayeredPlan_Test_LF_Result = " << typeid(LayeredPlan_Test_LF).name() << "\n";
+    //std::cerr << "uqniue_nodes_result = " << typeid(uqniue_nodes_result).name() << "\n";
 
     // ============= For testing Layered Plan =============
     std::cerr << "\n";

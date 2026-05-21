@@ -5,7 +5,7 @@
 namespace tsr
 {
     // ================================================================ SEMANTICS ================================================================
-    // ########### IMPL ########### 
+    // ########### IMPL ###########
     // PLAN [OUTPUT REPRESENTATION]
     // @brief Compiler Output, which means sequential execution
     template <typename NodeT>
@@ -33,7 +33,7 @@ namespace tsr
         using type = typename MakeSequentialPlanFromIR<ir_graph, Direction>::type;
     };
 
-    template <typename Tag,typename NodePackT, typename RelationPackT, ResolverDirection Direction>
+    template <typename Tag, typename NodePackT, typename RelationPackT, ResolverDirection Direction>
     struct MakeSequentialPlan<GraphIR<Tag, NodePackT, RelationPackT>, Direction>
     {
         using type = typename MakeSequentialPlanFromIR<GraphIR<Tag, NodePackT, RelationPackT>, Direction>::type;
@@ -90,45 +90,45 @@ namespace tsr
     };
 
     // fwd
-    template<typename GraphT, ResolverDirection Direction>
+    template <typename GraphT, ResolverDirection Direction>
     struct GraphDirection;
-    template<typename GraphT, ResolverDirection DefaultDirection, typename... Overrides>
+    template <typename GraphT, ResolverDirection DefaultDirection, typename... Overrides>
     struct ResolveGraphDirection
     {
         static constexpr ResolverDirection value = DefaultDirection;
     };
-    template<typename TargetGraphT, ResolverDirection DefaultDirection, typename OverrideGraphT, ResolverDirection OverrideDirection, typename... Rest>
-    struct ResolveGraphDirection<TargetGraphT, DefaultDirection, GraphDirection<OverrideGraphT, OverrideDirection>, Rest...>
+    template <typename TargetGraphT, ResolverDirection DefaultDirection, typename OverrideGraphT,
+              ResolverDirection OverrideDirection, typename... Rest>
+    struct ResolveGraphDirection<TargetGraphT, DefaultDirection, GraphDirection<OverrideGraphT, OverrideDirection>,
+                                 Rest...>
     {
-        static constexpr ResolverDirection value = 
+        static constexpr ResolverDirection value =
             std::is_same_v<TargetGraphT, OverrideGraphT>
-                    ? OverrideDirection
-                    : ResolveGraphDirection<
-                            TargetGraphT,
-                            DefaultDirection,
-                            Rest...>
-                            ::value;
+                ? OverrideDirection
+                : ResolveGraphDirection<TargetGraphT, DefaultDirection, Rest...>::value;
     };
 
-    template<typename MetaPlanT, ResolverDirection DefaultDirection, typename... Overrides>
+    template <typename MetaPlanT, ResolverDirection DefaultDirection, typename... Overrides>
     struct MakeSubPlanPackFromMetaPlan;
 
-    template<typename... GraphTs, ResolverDirection DefaultDirection, typename... Overrides>
+    template <typename... GraphTs, ResolverDirection DefaultDirection, typename... Overrides>
     struct MakeSubPlanPackFromMetaPlan<SequentialPlan<NodePack<Node<GraphTs>...>>, DefaultDirection, Overrides...>
     {
-        using type = SubPlanPack<typename MakeSubPlan<GraphTs, ResolveGraphDirection<GraphTs, DefaultDirection, Overrides...>::value>::type...>;
+        using type = SubPlanPack<typename MakeSubPlan<
+            GraphTs, ResolveGraphDirection<GraphTs, DefaultDirection, Overrides...>::value>::type...>;
     };
 
-
     // ########### API ###########
-    template<typename GraphT, ResolverDirection Direction>
+    template <typename GraphT, ResolverDirection Direction>
     struct GraphDirection
     {
         using graph_type = GraphT;
         static constexpr ResolverDirection direction = Direction;
     };
 
-    template<typename MetaGraphT, ResolverDirection MetaDirection/*meta*/, ResolverDirection DefaultSubDirection/*default sub*/, typename... Overrides/*overrides sub graph direction*/>
+    template <typename MetaGraphT, ResolverDirection MetaDirection /*meta*/,
+              ResolverDirection DefaultSubDirection /*default sub*/,
+              typename... Overrides /*overrides sub graph direction*/>
     struct MakeHierarchicalPlan
     {
         using meta_ir = typename Lower<MetaGraphT>::type;
@@ -180,38 +180,60 @@ namespace tsr
     //                                     typename FindSubPlan<GraphT, SubPlanPack<Rest...>>::type>;
     // };
 
-
     // ================================================================ Layered Plan ================================================================
-    // 
-    template<typename NodePackT>
-    struct LayerPack{};
-    template<typename... NodeTs>
-    struct LayerPack<NodePack<NodeTs...>>
+    //
+    template <typename... Layers>
+    struct LayerPack
     {
-        using type = NodePack<NodeTs...>;
     };
 
     // @brief Planning the execution of parallel layers
-    template <typename... PlanTs>
-    struct LayeredPlan;
+    template <typename LayerPackT>
+    struct LayeredPlan
+    {
+        using layer_pack_type = LayerPackT;
+    };
 
     // Impl
-    template<typename GraphIRT, ResolverDirection Direction>
-    struct MakeLayeredPlanFromIR{};
-    // template<typename GraphIRT, ResolverDirection Direction>
-    // struct MakeLayeredPlanFromIR<GraphIRT, Direction>
-    // {
-    //     using type = LayeredPlan<>;
-    // };
+    template <typename LayerPackT, typename ReadyPackT>
+    struct AppendLayer;
+    template <typename... ExistingLayers, typename... ReadyPackTs>
+    struct AppendLayer<LayerPack<ExistingLayers...>, NodePack<ReadyPackTs...>>
+    {
+        using type = LayerPack<ExistingLayers..., NodePack<ReadyPackTs...>>;
+    };
+
+    template <typename LayerPackT /*Confirmed topo order*/, typename RemainingNodePackT,
+              typename RemainingRelationPackT, ResolverDirection Direction>
+    struct MakeLayeredPlanImpl;
+    template <typename LayerPackT /*Confirmed topo order*/, typename RemainingRelationPackT,
+              ResolverDirection Direction>
+    struct MakeLayeredPlanImpl<LayerPackT, NodePack<>, RemainingRelationPackT, Direction>
+    {
+        using type = LayeredPlan<LayerPackT>;
+    };
+    template <typename LayerPackT /*Confirmed topo order*/, typename... RemainingNodeTs,
+              typename RemainingRelationPackT, ResolverDirection Direction>
+    struct MakeLayeredPlanImpl<LayerPackT, NodePack<RemainingNodeTs...>, RemainingRelationPackT, Direction>
+    {
+        using ready = typename CollectReadyNodes<NodePack<RemainingNodeTs...>, RemainingRelationPackT, Direction>::type;
+
+        static_assert(!std::is_same_v<ready, NodePack<>>, "Cycle detected or graph is not layer-sortable");// check cycles
+
+        using next_layers = typename AppendLayer<LayerPackT, ready>::type;
+        using next_nodes = typename PruneNodeByNodes<NodePack<>, ready, NodePack<RemainingNodeTs...>>::type;
+        using next_relations = typename PruneRelationsByNodes<ready, RemainingRelationPackT, Direction>::type;
+
+        using type = typename MakeLayeredPlanImpl<next_layers, next_nodes, next_relations, Direction>::type;
+    };
 
     // API
-
-
-    template<typename GraphT, ResolverDirection Direction>
+    template <typename GraphT, ResolverDirection Direction>
     struct MakeLayeredPlan
     {
-        using ir_graph = Lower<GraphT>::type;
+        using ir_graph = typename Lower<GraphT>::type;
 
-        using type = typename MakeLayeredPlanFromIR<ir_graph, Direction>::type;
+        using type = typename MakeLayeredPlanImpl<LayerPack<>, typename ir_graph::nodes, typename ir_graph::relations,
+                                                    Direction>::type;
     };
 } // namespace tsr
