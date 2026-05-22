@@ -42,16 +42,17 @@ dependency execution order, ownership, precedence, etc.
 
 ## Canonical Forms
 
-### Sequential execution plan
+### execution plan (Sequential or Layered)
 ```
 SequentialPlan<NodePack<...>>
+LayeredPlan<NodePack<...>>
 ```
 
 ### Hierarchical execution plan
 ```
 HierarchicalPlan<
     MetaPlan,
-    SubPlanPack<...>>
+    SubPlanPack<SubPlan<Graph<>, (Sequential/Layered)Plan<...>>,...>>
 ```
 
 ### Meta-graph node

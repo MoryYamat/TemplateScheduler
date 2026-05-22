@@ -140,9 +140,33 @@ namespace tsr
     };
 
     // ============= For testing Layered Plan =============
-    struct LP_R{};
-    struct LP_A{};
-    struct LP_B{};
-    struct LP_C{};
+    struct LP_R
+    {
+        static void Run()
+        {
+            std::cerr << "LP_R\n";
+        }
+    };
+    struct LP_A
+    {
+        static void Run()
+        {
+            std::cerr << "LP_A\n";
+        }
+    };
+    struct LP_B
+    {
+        static void Run()
+        {
+            std::cerr << "LP_B\n";
+        }
+    };
+    struct LP_C
+    {
+        static void Run()
+        {
+            std::cerr << "LP_C\n";
+        }
+    };
     struct LPTag{};
 } // namespace tsr

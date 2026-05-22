@@ -268,8 +268,9 @@ int main()
     static_assert(std::is_same_v<LayeredPlan_Test_RF, LP_G_MakeLayered_RF_Expected>);
     static_assert(std::is_same_v<LayeredPlan_Test_LF, LP_G_MakeLayered_LF_Expected>);
 
-    std::cerr << "LayeredPlan_Test_RF_Result = " << typeid(LayeredPlan_Test_RF).name() << "\n";
-    std::cerr << "\nLayeredPlan_Test_LF_Result = " << typeid(LayeredPlan_Test_LF).name() << "\n";
+    ExecutePlan<LayeredPlan_Test_RF, DebugExecutionConfig>::Run(ctx);
+    // std::cerr << "LayeredPlan_Test_RF_Result = " << typeid(LayeredPlan_Test_RF).name() << "\n";
+    // std::cerr << "\nLayeredPlan_Test_LF_Result = " << typeid(LayeredPlan_Test_LF).name() << "\n";
     //std::cerr << "uqniue_nodes_result = " << typeid(uqniue_nodes_result).name() << "\n";
 
     // ============= For testing Layered Plan =============

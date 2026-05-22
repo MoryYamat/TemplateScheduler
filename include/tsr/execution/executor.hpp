@@ -25,14 +25,22 @@ namespace tsr
     struct DefaultExecutionConfig
     {
         static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Assert;
+        static constexpr bool emit_barrier_log = false;
     };
     struct WarnExecutionConfig
     {
         static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Warn;
+        static constexpr bool emit_barrier_log = true;
     };
     struct SkipExecutionConfig
     {
         static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Skip;
+        static constexpr bool emit_barrier_log = false;
+    };
+    struct DebugExecutionConfig
+    {
+        static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Warn;
+        static constexpr bool emit_barrier_log = true;
     };
 
     // =========================================== Validations ===========================================
@@ -45,8 +53,10 @@ namespace tsr
     inline constexpr bool always_false_executor_v = false;
 
     // user adaptor
-    template<typename T>
-    struct Executor{};
+    template <typename T>
+    struct Executor
+    {
+    };
 
     template <typename T>
     struct ExecutorDispatch
@@ -54,19 +64,19 @@ namespace tsr
         template <typename ConfigT = DefaultExecutionConfig, typename Context>
         static void Run(Context& context)
         {
-            if constexpr (requires {Executor<T>::template Run<ConfigT>(context);})
+            if constexpr (requires { Executor<T>::template Run<ConfigT>(context); })
             {
                 Executor<T>::template Run<ConfigT>(context);
             }
-            else if constexpr (requires { Executor<T>::Run(context);})
+            else if constexpr (requires { Executor<T>::Run(context); })
             {
                 Executor<T>::Run(context);
             }
-            else if constexpr (requires { Executor<T>::template Run<ConfigT>();})
+            else if constexpr (requires { Executor<T>::template Run<ConfigT>(); })
             {
                 Executor<T>::template Run<ConfigT>();
             }
-            else if constexpr (requires { Executor<T>::Run();})
+            else if constexpr (requires { Executor<T>::Run(); })
             {
                 Executor<T>::Run();
             }
@@ -94,6 +104,19 @@ namespace tsr
                 {
                     std::cerr << "[tsr] warning: missing executor; skipped\n";
                 }
+            }
+        }
+    };
+
+    template <typename ConfigT>
+    struct BarrierDispatch
+    {
+        template <typename Context>
+        static void Run(Context&)
+        {
+            if constexpr (ConfigT::emit_barrier_log)
+            {
+                std::cerr << "[tsr] barrier\n";
             }
         }
     };
@@ -143,6 +166,15 @@ namespace tsr
         static void Run(Context& context)
         {
             ExecuteHierarchicalPlan<MetaPlanT, SubPlanPackT, ConfigT>::Run(context);
+        }
+    };
+    template <typename... NodePackTs, typename ConfigT>
+    struct ExecutePlan<LayeredPlan<LayerPack<NodePackTs...>>, ConfigT>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            ((ExecuteOrder<NodePackTs, ConfigT>::Run(context), BarrierDispatch<ConfigT>::Run(context)), ...);
         }
     };
 }; // namespace tsr
