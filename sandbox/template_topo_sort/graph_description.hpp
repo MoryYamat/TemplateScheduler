@@ -115,8 +115,7 @@ namespace tsr
     };
     using GG_C_Graph = Graph<GG_TEST_C_GraphTag, GG_C_Arc_0>;
 
-
-    // =================== TEST FOR EXECUTE META GRAPH (PLAN) =================== 
+    // =================== TEST FOR EXECUTE META GRAPH (PLAN) ===================
     // Positions
     using PosNode = Node<Pos>;
     using DisNode = Node<Dis>; // distance
@@ -133,16 +132,19 @@ namespace tsr
     using CollNode = Node<Collision>;
     using CollMaskNode = Node<CollisionMask>;
     using Ontology_Coll_Depend = Arc<CollNode, CollMaskNode>;
-    struct CollTag{};
+    struct CollTag
+    {
+    };
     using Ontology_CollGraph = Graph<CollTag, Ontology_Coll_Depend>;
     // meta graph
     using PhysGraphNode = Node<Ontology_PhysGraph>;
     using CollGraphNode = Node<Ontology_CollGraph>;
     using PhysGraphArc = Arc<PhysGraphNode, CollGraphNode>;
-    struct PhysMetaGraphTag{};
+    struct PhysMetaGraphTag
+    {
+    };
     using PhysMetaGraph = Graph<PhysMetaGraphTag, PhysGraphArc>;
-    
-    
+
     // handle Graph as Node
     using GG_Graph_A_NR = Node<GG_A_Graph>;
     using GG_Graph_B_N0 = Node<GG_B_Graph>;
@@ -154,8 +156,23 @@ namespace tsr
     };
     using GG_Meta_Graph = Graph<Meta_Graphs_Tag, GG_Graph_Arc>;
 
-
     // ============= For testing Layered Plan =============
     using LP_G = Graph<LPTag, Arc<Node<LP_R>, Node<LP_A>, Node<LP_B>>, Arc<Node<LP_C>, Node<LP_A>>>;
     // expected: LayeredPlan<LayerPack<NodePack<Node<LP_R>>, NodePack<Node<LP_B>,Node<LP_C>>, NodePack<Node<LP_A>>>
+
+    // ============== Hierarchical Plan + Layered Plan
+    // Graph A
+    using GG_A_Graph_HL =
+        Graph<GG_TEST_A_GraphTag, Arc<Node<GG_A_R>, Node<GG_A_0>, Arc<Node<GG_A_1>, Node<GG_A_2>, Node<GG_A_3>>>>;
+    // Graph B
+    using GG_B_Graph_HL =
+        Graph<GG_TEST_B_GraphTag, Arc<Node<GG_B_R>, Node<GG_B_0>, Arc<Node<GG_B_1>, Node<GG_B_2>, Node<GG_B_3>>>>;
+    // Graph C
+    using GG_C_Graph_HL =
+        Graph<GG_TEST_C_GraphTag, Arc<Node<GG_C_R>, Node<GG_C_0>, Arc<Node<GG_C_1>, Node<GG_C_2>, Node<GG_C_3>>>>;
+    // Meta Graph
+    using GG_Meta_Graph_HL = Graph<Meta_Graphs_Tag, Arc<Node<GG_A_Graph>, Node<GG_B_Graph>, Node<GG_C_Graph>>>;
+
+    
+
 } // namespace tsr

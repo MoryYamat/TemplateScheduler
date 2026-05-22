@@ -123,11 +123,14 @@ int main()
 
     std::cerr << "\n ================ Test of Graph of Graphs ===============\n ";
     using IR_GG_META_GRAPH_Hierarchical_RFRF =
-        typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst>::type;
+        typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst,
+                                      PlanKind::Sequential>::type;
     using IR_GG_META_GRAPH_Hierarchical_RFLF =
-        typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst>::type;
+        typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst,
+                                      PlanKind::Sequential>::type;
     using IR_GG_META_GRAPH_Hierarchical_Overrides_LFRF =
         typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst,
+                                      PlanKind::Sequential,
                                       GraphDirection<GG_A_Graph, ResolverDirection::LeafFirst>>::type;
     std::cerr << "IR_GG_META_GRAPH_Hierarchical_RFRF: \n" << typeid(IR_GG_META_GRAPH_Hierarchical_RFRF).name() << "\n";
     std::cerr << "\nIR_GG_META_GRAPH_Hierarchical_RFLF: \n"
@@ -193,8 +196,9 @@ int main()
                          tsr::SubPlan<BTag, GraphB, tsr::SequentialPlan<tsr::NodePack<tsr::Node<B0>, tsr::Node<B1>>>>>>;
 
     // Actual
-    using ActualMetaPlan = typename tsr::MakeHierarchicalPlan<MetaGraph, tsr::ResolverDirection::RootFirst,
-                                                              tsr::ResolverDirection::RootFirst>::type;
+    using ActualMetaPlan =
+        typename tsr::MakeHierarchicalPlan<MetaGraph, tsr::ResolverDirection::RootFirst,
+                                           tsr::ResolverDirection::RootFirst, PlanKind::Sequential>::type;
 
     // Test
     static_assert(std::is_same_v<ActualMetaPlan, ExpectedMetaPlan>, "MakeHierarchicalPlan RootFirst/RootFirst failed");
@@ -202,8 +206,8 @@ int main()
 
     // ----------------------------------------- Test For Hierarchical Plan -----------------------------------------
     std::cerr << "\n ================== Executing Hierarchical Plan Tests ================== \n";
-    using PysDomainHierarchicalPlan =
-        MakeHierarchicalPlan<PhysMetaGraph, ResolverDirection::RootFirst, ResolverDirection::LeafFirst>::type;
+    using PysDomainHierarchicalPlan = MakeHierarchicalPlan<PhysMetaGraph, ResolverDirection::RootFirst,
+                                                           ResolverDirection::LeafFirst, PlanKind::Sequential>::type;
     ExecutePlan<PysDomainHierarchicalPlan, WarnExecutionConfig>::Run(ctx);
     // ######## Exepected ########
     using ExpectedPysMetaPlan = SequentialPlan<NodePack<Node<Ontology_PhysGraph>, Node<Ontology_CollGraph>>>;
@@ -263,19 +267,83 @@ int main()
     //using uqniue_nodes_result = Lower<TestGraph>::nodes;
     using LayeredPlan_Test_RF = typename MakeLayeredPlan<LP_G, ResolverDirection::RootFirst>::type;
     using LayeredPlan_Test_LF = typename MakeLayeredPlan<LP_G, ResolverDirection::LeafFirst>::type;
-    using LP_G_MakeLayered_RF_Expected = LayeredPlan<LayerPack<NodePack<Node<LP_R>, Node<LP_C>>, NodePack<Node<LP_A>, Node<LP_B>>>>;
-    using LP_G_MakeLayered_LF_Expected = LayeredPlan<LayerPack<NodePack<Node<LP_A>, Node<LP_B>>, NodePack<Node<LP_R>, Node<LP_C>>>>;
+    using LP_G_MakeLayered_RF_Expected =
+        LayeredPlan<LayerPack<NodePack<Node<LP_R>, Node<LP_C>>, NodePack<Node<LP_A>, Node<LP_B>>>>;
+    using LP_G_MakeLayered_LF_Expected =
+        LayeredPlan<LayerPack<NodePack<Node<LP_A>, Node<LP_B>>, NodePack<Node<LP_R>, Node<LP_C>>>>;
     static_assert(std::is_same_v<LayeredPlan_Test_RF, LP_G_MakeLayered_RF_Expected>);
     static_assert(std::is_same_v<LayeredPlan_Test_LF, LP_G_MakeLayered_LF_Expected>);
 
     ExecutePlan<LayeredPlan_Test_RF, DebugExecutionConfig>::Run(ctx);
+
+    std::cerr << "\n";
+    // ============= META PLAN + LAYRED PLAN ================
+    // ================================================================
+    // HierarchicalPlan RootFirst + Sequential
+    // ================================================================
+    using Actual_Hierarchical_RF_RF =
+        typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst,
+                                      PlanKind::Sequential>::type;
+    using Expected_Hierarchical_RF_RF = HierarchicalPlan<
+        SequentialPlan<NodePack<Node<GG_A_Graph>, Node<GG_B_Graph>, Node<GG_C_Graph>>>,
+        SubPlanPack<
+            SubPlan<GG_TEST_A_GraphTag, GG_A_Graph,
+                    SequentialPlan<NodePack<Node<GG_A_R>, Node<GG_A_0>, Node<GG_A_1>, Node<GG_A_2>, Node<GG_A_3>>>>,
+            SubPlan<GG_TEST_B_GraphTag, GG_B_Graph,
+                    SequentialPlan<NodePack<Node<GG_B_R>, Node<GG_B_0>, Node<GG_B_1>, Node<GG_B_2>, Node<GG_B_3>>>>,
+            SubPlan<GG_TEST_C_GraphTag, GG_C_Graph,
+                    SequentialPlan<NodePack<Node<GG_C_R>, Node<GG_C_0>, Node<GG_C_1>, Node<GG_C_2>, Node<GG_C_3>>>>>>;
+
+    static_assert(std::is_same_v<Actual_Hierarchical_RF_RF, Expected_Hierarchical_RF_RF>,
+                  "HierarchicalPlan Sequential failed");
+
+    // ================================================================
+    // HierarchicalPlan RootFirst + Layered
+    // ================================================================
+    using Actual_Hierarchical_RF_Layered_HL =
+        typename MakeHierarchicalPlan<GG_Meta_Graph_HL, ResolverDirection::RootFirst, ResolverDirection::RootFirst,
+                                      PlanKind::Layered>::type;
+    using Expected_Hierarchical_RF_Layered = HierarchicalPlan<
+        SequentialPlan<NodePack<Node<GG_A_Graph_HL>, Node<GG_B_Graph_HL>, Node<GG_C_Graph_HL>>>,
+        SubPlanPack<SubPlan<GG_TEST_A_GraphTag, GG_A_Graph_HL,
+                            LayeredPlan<LayerPack<NodePack<Node<GG_A_R>>, NodePack<Node<GG_A_0>, Node<GG_A_1>>,
+                                                  NodePack<Node<GG_A_2>, Node<GG_A_3>>>>>,
+                    SubPlan<GG_TEST_B_GraphTag, GG_B_Graph_HL,
+                            LayeredPlan<LayerPack<NodePack<Node<GG_B_R>>, NodePack<Node<GG_B_0>, Node<GG_B_1>>,
+                                                  NodePack<Node<GG_B_2>, Node<GG_B_3>>>>>,
+                    SubPlan<GG_TEST_C_GraphTag, GG_C_Graph_HL,
+                            LayeredPlan<LayerPack<NodePack<Node<GG_C_R>>, NodePack<Node<GG_C_0>, Node<GG_C_1>>,
+                                                  NodePack<Node<GG_C_2>, Node<GG_C_3>>>>>>>;
+
+    static_assert(std::is_same_v<Actual_Hierarchical_RF_Layered_HL, Expected_Hierarchical_RF_Layered>,
+                  "HierarchicalPlan Layered failed");
+
+    // ================================================================
+    // HierarchicalPlan Override Test
+    // Graph A only -> LeafFirst + Layered
+    // ================================================================
+    using Actual_Hierarchical_Override_HL =
+        typename MakeHierarchicalPlan<GG_Meta_Graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst,
+                                      PlanKind::Sequential, GraphDirection<GG_A_Graph_HL, ResolverDirection::LeafFirst>,
+                                      GraphPlanKind<GG_A_Graph_HL, PlanKind::Layered>>::type;
+    using Expected_Hierarchical_Override = HierarchicalPlan<
+        SequentialPlan<NodePack<Node<GG_A_Graph_HL>, Node<GG_B_Graph_HL>, Node<GG_C_Graph_HL>>>,
+        SubPlanPack<
+            SubPlan<GG_TEST_A_GraphTag, GG_A_Graph_HL,
+                    LayeredPlan<LayerPack<NodePack<Node<GG_A_0>, Node<GG_A_2>, Node<GG_A_3>>,
+                                          NodePack<Node<GG_A_1>>,
+                                          NodePack<Node<GG_A_R>>>>>,
+            SubPlan<GG_TEST_B_GraphTag, GG_B_Graph_HL,
+                    SequentialPlan<NodePack<Node<GG_B_R>, Node<GG_B_0>, Node<GG_B_1>, Node<GG_B_2>, Node<GG_B_3>>>>,
+            SubPlan<GG_TEST_C_GraphTag, GG_C_Graph_HL,
+                    SequentialPlan<NodePack<Node<GG_C_R>, Node<GG_C_0>, Node<GG_C_1>, Node<GG_C_2>, Node<GG_C_3>>>>>>;
+
+    static_assert(std::is_same_v<Actual_Hierarchical_Override_HL, Expected_Hierarchical_Override>,
+                  "HierarchicalPlan Override failed");
+
     // std::cerr << "LayeredPlan_Test_RF_Result = " << typeid(LayeredPlan_Test_RF).name() << "\n";
     // std::cerr << "\nLayeredPlan_Test_LF_Result = " << typeid(LayeredPlan_Test_LF).name() << "\n";
     //std::cerr << "uqniue_nodes_result = " << typeid(uqniue_nodes_result).name() << "\n";
-
-    // ============= For testing Layered Plan =============
-    std::cerr << "\n";
-    std::cerr << "For testing Layered Plan\n";
 
     // using LayeredPlan_Test = MakeLayeredPlan<LP_G, ResolverDirection::RootFirst>::type;
     // std::cerr << "LayeredPlan_Test_Result = " = typeid(LayeredPlan_Test).name() << "\n";
