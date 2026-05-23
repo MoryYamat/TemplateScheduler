@@ -15,7 +15,10 @@ namespace tsr
     using CES_N_COLL = Node<es::Collision>;
     using CES_N_MASK = Node<es::CollisionMask>;
 
-    using CES_PROCESS_N_INTEG = Node<es::Integrate>;
-    using CES_PROCESS_N_COLL = Node<es::CollisionDetection>;
-    using CES_PROCESS_N_RENDER = Node<es::Renderer>;
+    using CES_PROC_N_INTEG = Node<es::Integrate>;
+    using CES_PROC_N_COLL = Node<es::CollisionDetection>;
+    using CES_PROC_N_RENDER = Node<es::Renderer>;
+    using CES_PROC_N_CAMERA = Node<es::CameraController>;
+    // using CES_PROC_N_INPUT =Node<es::InputSystem>;
+    using CES_PROC_N_INTENT = Node<es::IntentSystem>;
 }//namespace tsr

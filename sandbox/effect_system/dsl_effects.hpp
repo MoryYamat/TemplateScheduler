@@ -9,7 +9,7 @@ namespace tsr
     template<>
     struct Effects<es::Integrate>
     {
-        using reads = ResourcePack<es::Velocity, es::Acceleration>;
+        using reads = ResourcePack<es::Intent,es::Velocity, es::Acceleration>;
         using writes = ResourcePack<es::Position>;
     };
 
@@ -23,7 +23,21 @@ namespace tsr
     template<>
     struct Effects<es::Renderer>
     {
-        using reads = ResourcePack<>;
+        using reads = ResourcePack<es::Camera, es::Position>;
         using writes = ResourcePack<>;
+    };
+
+    template<>
+    struct Effects<es::IntentSystem>
+    {
+        using reads = ResourcePack<es::Input>;
+        using writes = ResourcePack<es::Intent>;
+    };
+
+    template<>
+    struct Effects<es::CameraController>
+    {
+        using reads = ResourcePack<es::Position>;
+        using writes = ResourcePack<es::Camera>;
     };
 }// es

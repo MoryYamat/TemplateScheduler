@@ -15,14 +15,14 @@ int main()
     using namespace tsr;
     using namespace es;
 
-    using CES_EXE_SET = ExecutionSet<CES_PROCESS_N_INTEG,CES_PROCESS_N_COLL,CES_PROCESS_N_RENDER>;
-    using Expected_CES_EXE_SET = ExecutionSet<Node<Integrate>, Node<CollisionDetection>,Node<Renderer>>;
+    using CES_EXE_SET = ExecutionSet<CES_PROC_N_INTENT, CES_PROC_N_INTEG,CES_PROC_N_COLL,CES_PROC_N_CAMERA, CES_PROC_N_RENDER>;
+    using Expected_CES_EXE_SET = ExecutionSet<Node<IntentSystem>, Node<Integrate>, Node<CollisionDetection>, Node<CameraController>, Node<Renderer>>;
     static_assert(std::is_same_v<Expected_CES_EXE_SET, CES_EXE_SET>, "Error in `Execution Set`");
 
     // extractors
     // reads
     using CES_EXTRACT_Reads_FROM_Effects_INTEG = typename ExtractReads<Effects<Integrate>>::type;
-    using Expected_CES_EXTRACT_Reads_INTEG = ResourcePack<es::Velocity, es::Acceleration>;
+    using Expected_CES_EXTRACT_Reads_INTEG = ResourcePack<es::Intent, es::Velocity, es::Acceleration>;
     using CES_EXTRACT_Reads_FROM_Node_INTEG = typename ExtractReads<Node<Integrate>>::type;
     static_assert(std::is_same_v<Expected_CES_EXTRACT_Reads_INTEG, CES_EXTRACT_Reads_FROM_Effects_INTEG>, "Error in `ExtractReads`");
     static_assert(std::is_same_v<Expected_CES_EXTRACT_Reads_INTEG, CES_EXTRACT_Reads_FROM_Node_INTEG>, "Error in `ExtractReads");
@@ -39,13 +39,15 @@ int main()
     static_assert(!CES_HAS_RESOURCE_INTERSECTION_INTEG::type::value, "Error in `DetermineReadWrite`");                      // expected == False
 
     // <Integrate>::writes::position and <CollisionDetection>::reads::position conflict
-    static_assert(!CanRunTogether_v<CES_PROCESS_N_INTEG, CES_PROCESS_N_COLL>, "Error in `CanRunTogether" );                 // expected == False 
+    static_assert(!CanRunTogether_v<CES_PROC_N_INTEG, CES_PROC_N_COLL>, "Error in `CanRunTogether" );                 // expected == False 
 
-    using CES_APPEND_IF_CONFLICTS = typename AppendConflictRelation<RelationPack<>, CES_PROCESS_N_INTEG, CES_PROCESS_N_COLL>::type;
-    std::cerr << "CES_APPEND_IF_CONFLICTS Result = " << typeid(CES_APPEND_IF_CONFLICTS).name() << "\n";
+    using CES_APPEND_IF_CONFLICTS = typename AppendConflictRelation<RelationPack<>, CES_PROC_N_INTEG, CES_PROC_N_COLL>::type;
+    // std::cerr << "CES_APPEND_IF_CONFLICTS Result = " << typeid(CES_APPEND_IF_CONFLICTS).name() << "\n";
     using CES_COLLECT_CONFLICTS_FOR_NODE_Res = typename CollectConflictRelations<RelationPack<>, CES_EXE_SET>::type;
-    std::cerr << "CES_COLLECT_CONFLICTS_FOR_NODE_Res = " << typeid(CES_COLLECT_CONFLICTS_FOR_NODE_Res).name() << "\n";
-    using Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res = RelationPack<Relation<Node<Integrate>, Node<CollisionDetection>>>;
+    //std::cerr << "CES_COLLECT_CONFLICTS_FOR_NODE_Res = " << typeid(CES_COLLECT_CONFLICTS_FOR_NODE_Res).name() << "\n";
+    using Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res =    RelationPack<Relation<Node<IntentSystem>, Node<Integrate>>,Relation<Node<Integrate>, Node<CollisionDetection>>, 
+                                                            Relation<Node<Integrate>, Node<CameraController>>, Relation<Node<Integrate>, Node<Renderer>>,
+                                                            Relation<Node<CameraController>, Node<Renderer>>>;
     static_assert(std::is_same_v<Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res, CES_COLLECT_CONFLICTS_FOR_NODE_Res>, "Error in `CollectEffectRelations`");
     // 
     // using Plan = typename MakeSafeLayeredPlan<ExecutionSet<Node<A>, Node<B>, Node<C>>>::type;
