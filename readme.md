@@ -10,6 +10,32 @@ TemplateScheduler is a working name.
 The project is not limited to scheduling.
 Its core is a non-invasive type-level directed graph DSL and compiler pipeline for generating validated execution plans.
 
+## Structure
+**The same Graph can be interpreted in multiple ways.**
+
+**A Graph is intentionally strucutral and non-invasive.**
+It does not force a single meaning such as dependency, ownership, ontology, or execution order.
+
+Different compiler  passes may interpret the same normalized IR differently and produce different artifacts:
+- Ontology
+- Execution plan
+- Visualization graph
+- Validation graph
+- Ownership graph
+
+```
+Graph:
+  purely structural
+IR:
+  normalized structure
+Interpretation:
+  edge meaning
+Plan:
+  execution/scheduling representation
+Executor:
+  runtime realization
+```
+
 ## 方針
 - 1. 対象型に基底クラスを要求しない
 - 2. 対象型にmember function名を要求しない

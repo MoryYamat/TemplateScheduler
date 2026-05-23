@@ -2,6 +2,8 @@
 
 #include "tsr/compiler/topological_sort.hpp"
 
+#include "tsr/effects/effect.hpp"
+
 namespace tsr
 {
     // ================================================================ CONFIG ================================================================
@@ -14,7 +16,8 @@ namespace tsr
     // ================================================================ SEMANTICS ================================================================
     // ########### IMPL ###########
     // PLAN [OUTPUT REPRESENTATION]
-    // @brief Compiler Output, which means sequential execution
+    // @brief Compiler Output, which means sequential execution /
+    // SequentialPlan reads graph topology as precedence constraint.
     template <typename NodeT>
     struct SequentialPlan;
     template <typename... NodeTs>
@@ -52,7 +55,8 @@ namespace tsr
     {
     };
 
-    // @brief Planning the execution of parallel layers
+    // @brief Planning the execution of parallel layers / 
+    // LayeredPlan reads graph topology as precedence constraint
     template <typename LayerPackT>
     struct LayeredPlan
     {
@@ -305,5 +309,4 @@ namespace tsr
     //     using type = std::conditional_t<std::is_same_v<GraphT, typename FirstSubPlan::graph_type>, FirstSubPlan,
     //                                     typename FindSubPlan<GraphT, SubPlanPack<Rest...>>::type>;
     // };
-
 } // namespace tsr
