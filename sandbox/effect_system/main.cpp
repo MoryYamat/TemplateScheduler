@@ -40,6 +40,13 @@ int main()
 
     // <Integrate>::writes::position and <CollisionDetection>::reads::position conflict
     static_assert(!CanRunTogether_v<CES_PROCESS_N_INTEG, CES_PROCESS_N_COLL>, "Error in `CanRunTogether" );                 // expected == False 
+
+    using CES_APPEND_IF_CONFLICTS = typename AppendConflictRelation<RelationPack<>, CES_PROCESS_N_INTEG, CES_PROCESS_N_COLL>::type;
+    std::cerr << "CES_APPEND_IF_CONFLICTS Result = " << typeid(CES_APPEND_IF_CONFLICTS).name() << "\n";
+    using CES_COLLECT_CONFLICTS_FOR_NODE_Res = typename CollectConflictRelations<RelationPack<>, CES_EXE_SET>::type;
+    std::cerr << "CES_COLLECT_CONFLICTS_FOR_NODE_Res = " << typeid(CES_COLLECT_CONFLICTS_FOR_NODE_Res).name() << "\n";
+    using Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res = RelationPack<Relation<Node<Integrate>, Node<CollisionDetection>>>;
+    static_assert(std::is_same_v<Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res, CES_COLLECT_CONFLICTS_FOR_NODE_Res>, "Error in `CollectEffectRelations`");
     // 
     // using Plan = typename MakeSafeLayeredPlan<ExecutionSet<Node<A>, Node<B>, Node<C>>>::type;
     

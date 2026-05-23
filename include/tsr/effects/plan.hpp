@@ -96,9 +96,52 @@ namespace tsr
                                                                  !HasWriteWriteConflict<Node<A>, Node<B>>::type::value>
     {
     };
+
+    template <typename A, typename B>
+    inline constexpr bool CanRunTogether_v = CanRunTogether<A, B>::value;
+
+    // *********** Collect Confilicts For Nodes ***********
+    template <typename A, typename B>
+    struct HasExecutionConflict : std::bool_constant<!CanRunTogether<A, B>::value>
+    {
+    };
+
+    template<typename ResultRelationPackT, typename TargetNode, typename CurrentNode>
+    struct AppendConflictRelation;    
+    template<typename... ResultTs, typename TargetNodeT, typename CurrentNodeT>
+    struct AppendConflictRelation<RelationPack<ResultTs...>, TargetNodeT, CurrentNodeT>
+    {
+        using type = 
+            std::conditional_t<HasExecutionConflict<TargetNodeT, CurrentNodeT>::value, RelationPack<ResultTs..., Relation<TargetNodeT, CurrentNodeT>>, RelationPack<ResultTs...>>;
+    };
     
-    template<typename A, typename B>
-    inline constexpr bool CanRunTogether_v = CanRunTogether<A,B>::value;
+    template <typename ResultRelationPackT, typename CurrentNodeT, typename RestNodePackT>
+    struct CollectConflictsForNode;
+    template <typename ResultRelationPackT, typename CurrentNodeT>
+    struct CollectConflictsForNode<ResultRelationPackT, CurrentNodeT, ExecutionSet<>>
+    {
+        using type = ResultRelationPackT;
+    };
+    template <typename ResultRelationPackT, typename CurrentNodeT, typename FirstRestNodeT, typename... RestNodeTs>
+    struct CollectConflictsForNode<ResultRelationPackT, CurrentNodeT, ExecutionSet<FirstRestNodeT, RestNodeTs...>>
+    {
+        using next_result = typename AppendConflictRelation<ResultRelationPackT, CurrentNodeT, FirstRestNodeT>::type;
+        using type = typename CollectConflictsForNode<next_result, CurrentNodeT, ExecutionSet<RestNodeTs...>>::type;
+    };
+    
+    template<typename ResultRelationPackT, typename ExecutionSetT>
+    struct CollectConflictRelations;
+    template<typename ResultRelationPackT>
+    struct CollectConflictRelations<ResultRelationPackT, ExecutionSet<>>
+    {
+        using type = ResultRelationPackT;
+    };
+    template<typename ResultRelationPackT, typename FirstNodeT, typename... RestNodeTs>
+    struct CollectConflictRelations<ResultRelationPackT, ExecutionSet<FirstNodeT, RestNodeTs...>>
+    {
+        using next_result = typename CollectConflictsForNode<ResultRelationPackT, FirstNodeT, ExecutionSet<RestNodeTs...>>::type;
+        using type = typename CollectConflictRelations<next_result, ExecutionSet<RestNodeTs...>>::type;
+    };
 
     template <typename ExecutionSetT>
     struct MakeSafeLayredPlan

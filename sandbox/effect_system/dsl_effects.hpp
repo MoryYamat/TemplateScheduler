@@ -23,7 +23,7 @@ namespace tsr
     template<>
     struct Effects<es::Renderer>
     {
-        using reads = ResourcePack<es::Position>;
+        using reads = ResourcePack<>;
         using writes = ResourcePack<>;
     };
 }// es
