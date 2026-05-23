@@ -49,7 +49,16 @@ int main()
                                                             Relation<Node<Integrate>, Node<CameraController>>, Relation<Node<Integrate>, Node<Renderer>>,
                                                             Relation<Node<CameraController>, Node<Renderer>>>;
     static_assert(std::is_same_v<Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res, CES_COLLECT_CONFLICTS_FOR_NODE_Res>, "Error in `CollectEffectRelations`");
-    // 
+    
+    struct CES_TestTag{};
+    using CES_SAFE_LAYERED_PLAN = typename MakeSafeLayeredPlan<CES_TestTag, CES_EXE_SET, ResolverDirection::RootFirst>::type;
+    // std::cerr <<  "CES_SAFE_LAYERED_PLAN Result = " << typeid(CES_SAFE_LAYERED_PLAN).name() << "\n";
+    using Expected_CES_SAFE_LAYERED_PLAN = SafeLayeredPlan<LayerPack<NodePack<Node<IntentSystem>>, 
+                                                                     NodePack<Node<Integrate>>, 
+                                                                     NodePack<Node<CollisionDetection>, Node<CameraController>>,
+                                                                     NodePack<Node<Renderer>>>>;
+    static_assert(std::is_same_v<Expected_CES_SAFE_LAYERED_PLAN, CES_SAFE_LAYERED_PLAN >, "Error in `MakeSafelayeredPlan`");
+
     // using Plan = typename MakeSafeLayeredPlan<ExecutionSet<Node<A>, Node<B>, Node<C>>>::type;
     
 

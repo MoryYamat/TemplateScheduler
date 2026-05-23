@@ -143,9 +143,31 @@ namespace tsr
         using type = typename CollectConflictRelations<next_result, ExecutionSet<RestNodeTs...>>::type;
     };
 
-    template <typename ExecutionSetT>
-    struct MakeSafeLayredPlan
+    template<typename ExecutionSetT>
+    struct ExecutionSetToNodePack;
+    template<typename... NodeTs>
+    struct ExecutionSetToNodePack<ExecutionSet<NodeTs...>>
     {
-        // using type = SafeLayeredPlan<>;
+        using type = NodePack<NodeTs...>;
+    };
+
+    template<typename LayeredPlanT>
+    struct ToSafeLayeredPlan;
+    template<typename LayeredPackT>
+    struct ToSafeLayeredPlan<LayeredPlan<LayeredPackT>>
+    {
+        using type = SafeLayeredPlan<LayeredPackT>;
+    };
+
+    template <typename EffectTag, typename ExecutionSetT, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct MakeSafeLayeredPlan
+    {
+        using nodes = typename ExecutionSetToNodePack<ExecutionSetT>::type;
+        using relations = typename CollectConflictRelations<RelationPack<>, ExecutionSetT>::type;
+        using ir = GraphIR<EffectTag, nodes, relations>;
+
+        using layered_plan = typename MakeLayeredPlan<ir, Direction>::type;
+
+        using type = typename ToSafeLayeredPlan<layered_plan>::type;
     };
 } // namespace tsr
