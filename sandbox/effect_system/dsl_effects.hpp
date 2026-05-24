@@ -1,8 +1,8 @@
 #pragma once
 
-#include "tsr/effects/effect.hpp"
 #include "user_components.hpp"
 #include "user_effects.hpp"
+#include "tsr/effects/effect.hpp"
 
 namespace tsr
 {

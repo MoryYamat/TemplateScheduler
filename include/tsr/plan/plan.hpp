@@ -3,6 +3,7 @@
 #include "tsr/compiler/topological_sort.hpp"
 
 #include "tsr/effects/effect.hpp"
+#include "tsr/effects/plan.hpp"
 
 namespace tsr
 {
@@ -268,6 +269,33 @@ namespace tsr
         using type = HierarchicalPlan<meta_plan, sub_plan_pack>;
     };
 
+    // ==================================== SafeLayeredPlan ====================================
+    template <typename LayerPackT>
+    struct SafeLayeredPlan
+    {
+        using layer_pack_type = LayerPackT;
+    };
+
+    template<typename LayeredPlanT>
+    struct ToSafeLayeredPlan;
+    template<typename LayeredPackT>
+    struct ToSafeLayeredPlan<LayeredPlan<LayeredPackT>>
+    {
+        using type = SafeLayeredPlan<LayeredPackT>;
+    };
+
+    template <typename EffectTag, typename ExecutionSetT, ResolverDirection Direction = ResolverDirection::RootFirst>
+    struct MakeSafeLayeredPlan
+    {
+        using nodes = typename ExecutionSetToNodePack<ExecutionSetT>::type;
+        using relations = typename CollectConflictRelations<RelationPack<>, ExecutionSetT>::type;
+        using ir = GraphIR<EffectTag, nodes, relations>;
+
+        using layered_plan = typename MakeLayeredPlan<ir, Direction>::type;
+
+        using type = typename ToSafeLayeredPlan<layered_plan>::type;
+    };
+
     // ====================== Execute HierarchicalPlan =======================
     // find and match the metaplan
     template <typename>
@@ -309,4 +337,5 @@ namespace tsr
     //     using type = std::conditional_t<std::is_same_v<GraphT, typename FirstSubPlan::graph_type>, FirstSubPlan,
     //                                     typename FindSubPlan<GraphT, SubPlanPack<Rest...>>::type>;
     // };
+
 } // namespace tsr

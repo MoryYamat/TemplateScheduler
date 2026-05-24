@@ -177,4 +177,15 @@ namespace tsr
             ((ExecuteOrder<NodePackTs, ConfigT>::Run(context), BarrierDispatch<ConfigT>::Run(context)), ...);
         }
     };
+
+    // ==================================== Execute SafeLayeredPlan ====================================
+    template <typename... NodePackTs, typename ConfigT>
+    struct ExecutePlan<SafeLayeredPlan<LayerPack<NodePackTs...>>, ConfigT>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            ((ExecuteOrder<NodePackTs, ConfigT>::Run(context), BarrierDispatch<ConfigT>::Run(context)), ...);
+        }
+    };
 }; // namespace tsr

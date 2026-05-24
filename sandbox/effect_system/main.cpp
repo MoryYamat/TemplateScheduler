@@ -2,7 +2,9 @@
 #include <type_traits>
 
 #include "tsr/effects/effect.hpp"// dsl
-#include "tsr/effects/plan.hpp"// compiler 
+#include "tsr/plan/plan.hpp"// required for making plan
+#include "tsr/execution/executor.hpp"// required for execution plans
+
 
 #include "dsl_descriptions.hpp"// Required for extraction
 #include "dsl_effects.hpp"// Required for extraction
@@ -10,7 +12,7 @@
 
 int main()
 {
-    std::cout << "hello effect system\n";
+    // std::cout << "hello effect system\n";
 
     using namespace tsr;
     using namespace es;
@@ -66,6 +68,17 @@ int main()
     //                                                                     NodePack<Node<IntentSystem>>>>;
     // std::cerr <<  "CES_SAFE_LAYERED_PLAN_LF Result = " << typeid(CES_SAFE_LAYERED_PLAN_LF).name() << "\n";
     // static_assert(std::is_same_v<Expected_CES_SAFE_LAYERED_PLAN_LF, CES_SAFE_LAYERED_PLAN_LF >, "Error in `MakeSafelayeredPlan`");// Deprecated 
+
+
+    using CES_TEST_SAFE_LAYRES_PLAN_RF = typename MakeSafeLayeredPlan<CES_TestTag, CES_EXE_SET>::type;
+    using Expected_CES_SAFE_LAYERED_PLAN_RF = SafeLayeredPlan<LayerPack<NodePack<Node<IntentSystem>>, 
+                                                                     NodePack<Node<Integrate>>, 
+                                                                     NodePack<Node<CollisionDetection>, Node<CameraController>>,
+                                                                     NodePack<Node<Renderer>>>>;
+
+    struct TestContext{};
+    TestContext test_ctx;
+    ExecutePlan<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(test_ctx);
 
     return 0;
 }

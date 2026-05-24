@@ -4,7 +4,6 @@
 #include "user_effects.hpp"
 
 #include "tsr/graph/graph_dsl.hpp"
-#include "tsr/effects/effect.hpp"
 
 namespace tsr
 {

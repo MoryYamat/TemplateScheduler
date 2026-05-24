@@ -2,18 +2,11 @@
 
 #include <type_traits>
 #include "tsr/effects/effect.hpp"
-
-#include "tsr/plan/plan.hpp"
-
+#include "tsr/graph/graph_dsl.hpp"
+#include "tsr/ir/relation.hpp"
 namespace tsr
 {
     // ==================================== SafeLayeredPlan ====================================
-    template <typename LayerPackT>
-    struct SafeLayeredPlan
-    {
-        using layer_pack_type = LayerPackT;
-    };
-
     // *********** Extractors ***********
     // reads
     template <typename T>
@@ -149,25 +142,5 @@ namespace tsr
     struct ExecutionSetToNodePack<ExecutionSet<NodeTs...>>
     {
         using type = NodePack<NodeTs...>;
-    };
-
-    template<typename LayeredPlanT>
-    struct ToSafeLayeredPlan;
-    template<typename LayeredPackT>
-    struct ToSafeLayeredPlan<LayeredPlan<LayeredPackT>>
-    {
-        using type = SafeLayeredPlan<LayeredPackT>;
-    };
-
-    template <typename EffectTag, typename ExecutionSetT, ResolverDirection Direction = ResolverDirection::RootFirst>
-    struct MakeSafeLayeredPlan
-    {
-        using nodes = typename ExecutionSetToNodePack<ExecutionSetT>::type;
-        using relations = typename CollectConflictRelations<RelationPack<>, ExecutionSetT>::type;
-        using ir = GraphIR<EffectTag, nodes, relations>;
-
-        using layered_plan = typename MakeLayeredPlan<ir, Direction>::type;
-
-        using type = typename ToSafeLayeredPlan<layered_plan>::type;
     };
 } // namespace tsr
