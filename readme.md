@@ -1,7 +1,22 @@
-# TShceduler
+# Type-level semantic compiler infrastructure
+A non-invasive type-level semantic IR framework for projecting existing C++ types into analyzable compile-time representations.
+
 existing types as semantics
 
 **semantic graph verifier / planner**
+
+Key Idea
+```
+Existing Types
+    ↓
+Structural Projection
+    ↓
+Canonical Graph IR
+    ↓
+Semantic Interpretation Passes
+    ↓
+Artifacts / Plans / Validation / Execution
+```
 
 ## Template Execution Order Resolver (Scheduler)
 - resolve compile time or Only once at runtime
@@ -165,6 +180,6 @@ using Plan =
 ```
 
 #### Missing Executor Policy
-- DefaultExecutionConfig: `static_assert(UserType<T>::Run())`
+- DefaultExecutionConfig: DefaultExecutionConfig: fail at compile time if no executable form is found
 - WarnExecutionConfig: Warning (standard input/output) if `UserType<T>::Run()` is not defined
 - SkipExecutionConfig: Skip execution (do not execute) regardless of whether `UserType<T>::Run()` is defined or not

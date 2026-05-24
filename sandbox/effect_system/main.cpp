@@ -51,16 +51,21 @@ int main()
     static_assert(std::is_same_v<Exepected_CES_COLLECT_CONFLICTS_FOR_NODE_Res, CES_COLLECT_CONFLICTS_FOR_NODE_Res>, "Error in `CollectEffectRelations`");
     
     struct CES_TestTag{};
-    using CES_SAFE_LAYERED_PLAN = typename MakeSafeLayeredPlan<CES_TestTag, CES_EXE_SET, ResolverDirection::RootFirst>::type;
-    // std::cerr <<  "CES_SAFE_LAYERED_PLAN Result = " << typeid(CES_SAFE_LAYERED_PLAN).name() << "\n";
-    using Expected_CES_SAFE_LAYERED_PLAN = SafeLayeredPlan<LayerPack<NodePack<Node<IntentSystem>>, 
+    using CES_SAFE_LAYERED_PLAN_RF = typename MakeSafeLayeredPlan<CES_TestTag, CES_EXE_SET, ResolverDirection::RootFirst>::type;
+    // std::cerr <<  "CES_SAFE_LAYERED_PLAN_RF Result = " << typeid(CES_SAFE_LAYERED_PLAN).name() << "\n";
+    using Expected_CES_SAFE_LAYERED_PLAN_RF = SafeLayeredPlan<LayerPack<NodePack<Node<IntentSystem>>, 
                                                                      NodePack<Node<Integrate>>, 
                                                                      NodePack<Node<CollisionDetection>, Node<CameraController>>,
                                                                      NodePack<Node<Renderer>>>>;
-    static_assert(std::is_same_v<Expected_CES_SAFE_LAYERED_PLAN, CES_SAFE_LAYERED_PLAN >, "Error in `MakeSafelayeredPlan`");
-
-    // using Plan = typename MakeSafeLayeredPlan<ExecutionSet<Node<A>, Node<B>, Node<C>>>::type;
-    
+    static_assert(std::is_same_v<Expected_CES_SAFE_LAYERED_PLAN_RF, CES_SAFE_LAYERED_PLAN_RF >, "Error in `MakeSafelayeredPlan`");
+    // ############# Deprecated ############# 
+    // using CES_SAFE_LAYERED_PLAN_LF = typename MakeSafeLayeredPlan<CES_TestTag, CES_EXE_SET, ResolverDirection::LeafFirst>::type; LeafFirst is currently deprecated in Plans derived from EffectSystem.
+    // using Expected_CES_SAFE_LAYERED_PLAN_LF = SafeLayeredPlan<LayerPack<NodePack<Node<CollisionDetection>,Node<Renderer>>, 
+    //                                                                     NodePack<Node<CameraController>>,
+    //                                                                     NodePack<Node<Integrate>>, 
+    //                                                                     NodePack<Node<IntentSystem>>>>;
+    // std::cerr <<  "CES_SAFE_LAYERED_PLAN_LF Result = " << typeid(CES_SAFE_LAYERED_PLAN_LF).name() << "\n";
+    // static_assert(std::is_same_v<Expected_CES_SAFE_LAYERED_PLAN_LF, CES_SAFE_LAYERED_PLAN_LF >, "Error in `MakeSafelayeredPlan`");// Deprecated 
 
     return 0;
 }

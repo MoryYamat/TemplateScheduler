@@ -51,8 +51,8 @@ namespace tsr
     template <typename IR>
     struct Validate;
 
-    template <typename Tag, typename Relations>
-    struct Validate<GraphIR<Tag, Relations>>
+    template <typename Tag, typaname NodePackT, typename Relations>
+    struct Validate<GraphIR<Tag, NodePackT, Relations>>
     {
         static_assert(IsUniqueRelations<Relations>::value, "Duplicated relations detected");
 
