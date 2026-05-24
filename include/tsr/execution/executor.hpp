@@ -7,6 +7,8 @@ An execution platform for actually using the compiler's output.
 
 #pragma once
 #include <iostream>
+#include <array>
+#include <future>
 // #include "tsr/graph/graph_dsl.hpp"
 // #include "tsr/compiler/topological_sort.hpp" // Delete the hierarchical DSL IR once it has been created.
 
@@ -107,6 +109,15 @@ namespace tsr
             }
         }
     };
+    template <typename T>
+    struct ExecutorDispatch<Node<T>>
+    {
+        template<typename ConfigT = DefaultExecutionConfig, typename Context>
+        static void Run(Context& context)
+        {
+            ExecutorDispatch<T>::template Run<ConfigT>(context);
+        }
+    };
 
     template <typename ConfigT>
     struct BarrierDispatch
@@ -188,4 +199,59 @@ namespace tsr
             ((ExecuteOrder<NodePackTs, ConfigT>::Run(context), BarrierDispatch<ConfigT>::Run(context)), ...);
         }
     };
+    template <typename NodePackT, typename ConfigT>
+    struct ExecuteLayerAsync;
+    template <typename... Ts, typename ConfigT>
+    struct ExecuteLayerAsync<NodePack<Node<Ts>...>, ConfigT>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            auto futures = std::array{
+                    std::async(std::launch::async, [&context] { 
+                        ExecutorDispatch<Ts>::template Run<ConfigT>(context); 
+                    })...
+                };
+
+            for(auto& f : futures)
+            {
+                f.get();
+            }
+            BarrierDispatch<ConfigT>::Run(context);
+        }
+    };
+    template<typename ConfigT>
+    struct ExecuteLayerAsync<NodePack<>, ConfigT>
+    {
+        template<typename Context>
+        static void Run(Context& context)
+        {
+            BarrierDispatch<ConfigT>::Run(context);
+        }
+    };
+
+    template <typename LayerPackT, typename ConfigT>
+    struct ExecuteLayerPackAsync;
+    template<typename... NodePackTs, typename ConfigT>
+    struct ExecuteLayerPackAsync<LayerPack<NodePackTs...>, ConfigT>
+    {
+        template<typename Context>
+        static void Run(Context& context)
+        {
+            (ExecuteLayerAsync<NodePackTs, ConfigT>::Run(context),...);
+        }
+    };
+
+    template <typename LayerPackT, typename ConfigT>
+    struct ExecutePlanAsync;
+    template <typename LayerPackT, typename ConfigT>
+    struct ExecutePlanAsync<SafeLayeredPlan<LayerPackT>, ConfigT>
+    {
+        template <typename Context>
+        static void Run(Context& context)
+        {
+            ExecuteLayerPackAsync<LayerPackT, ConfigT>::Run(context);
+        }
+    };
+
 }; // namespace tsr

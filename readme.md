@@ -183,3 +183,11 @@ using Plan =
 - DefaultExecutionConfig: DefaultExecutionConfig: fail at compile time if no executable form is found
 - WarnExecutionConfig: Warning (standard input/output) if `UserType<T>::Run()` is not defined
 - SkipExecutionConfig: Skip execution (do not execute) regardless of whether `UserType<T>::Run()` is defined or not
+
+
+### Paralell Execution
+- Parallel executor assumes Effects<T> accurately describes all shared mutable state access.
+
+Parallel safety contract:
+- Effects<T> may over-approximate, but must not under-approximate,
+- the shared mutable state accessed by T.

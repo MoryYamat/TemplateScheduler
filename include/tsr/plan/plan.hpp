@@ -3,7 +3,7 @@
 #include "tsr/compiler/topological_sort.hpp"
 
 #include "tsr/effects/effect.hpp"
-#include "tsr/effects/plan.hpp"
+#include "tsr/effects/access_analysis.hpp"
 
 namespace tsr
 {

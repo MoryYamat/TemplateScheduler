@@ -78,7 +78,10 @@ int main()
 
     struct TestContext{};
     TestContext test_ctx;
-    ExecutePlan<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(test_ctx);
+    std::cerr << "=== LINEAR ORDER EXECUTION ===\n";
+    ExecutePlan<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(test_ctx);// linear order
 
+    std::cerr << "\n=== PARALLEL EXECUTION  ===\n";
+    ExecutePlanAsync<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(test_ctx);// Parallel execution
     return 0;
 }
