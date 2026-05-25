@@ -5,7 +5,7 @@ existing types as semantics
 
 **semantic graph verifier / planner**
 
-Key Idea
+## Key Idea
 ```
 Existing Types
     ↓
@@ -16,6 +16,55 @@ Canonical Graph IR
 Semantic Interpretation Passes
     ↓
 Artifacts / Plans / Validation / Execution
+```
+
+### properties
+```
+Graph:
+    purely structural
+
+IR:
+    normalized structure
+
+Interpretation:
+    edge meaning
+
+Plan:
+    execution / scheduling representation
+
+Executor:
+    runtime realization
+```
+
+## 方針
+- 1. 対象型に基底クラスを要求しない
+- 2. 対象型にmember function名を要求しない
+- 3. 対象型にmacroを埋め込まない
+- 4. traits/specialization/adapterで外側から接続できる
+- 5. 実行方法も Executor<T> で外部定義できる
+
+## Policy
+- 1. Do not require a base class for the target type.
+- 2. Do not require a member function name for the target type.
+- 3. Do not embed macros in the target type.
+- 4. Connect from the outside using traits/specialization/adapter.
+- 5. Execution method can also be defined externally using Executor<T>.
+
+### projection:  
+External systems are integrated through adapters/projections,  
+rather than requiring ownership or inheritance.
+
+### Runtime separation
+```
+Compile-time:
+  dependency analysis
+  plan synthesis
+  scheduling metadata
+
+Runtime:
+  task execution
+  thread reuse
+  worker scheduling
 ```
 
 ## Template Execution Order Resolver (Scheduler)
@@ -51,21 +100,6 @@ Executor:
   runtime realization
 ```
 
-## 方針
-- 1. 対象型に基底クラスを要求しない
-- 2. 対象型にmember function名を要求しない
-- 3. 対象型にmacroを埋め込まない
-- 4. traits/specialization/adapterで外側から接続できる
-- 5. 実行方法も Executor<T> で外部定義できる
-
-## Policy
-- 1. Do not require a base class for the target type.
-- 2. Do not require a member function name for the target type.
-- 3. Do not embed macros in the target type.
-- 4. Connect from the outside using traits/specialization/adapter.
-- 5. Execution method can also be defined externally using Executor<T>.
-
-
 ## Core Semantic Assumptions
 
 - `Node<T>` is the canonical semantic unit.
@@ -86,7 +120,7 @@ dependency execution order, ownership, precedence, etc.
 ### execution plan (Sequential or Layered)
 ```
 SequentialPlan<NodePack<...>>
-LayeredPlan<NodePack<...>>
+LayeredPlan<LayerPack<NodePack<...>,...>>
 ```
 
 ### Hierarchical execution plan
@@ -185,9 +219,48 @@ using Plan =
 - SkipExecutionConfig: Skip execution (do not execute) regardless of whether `UserType<T>::Run()` is defined or not
 
 
-### Paralell Execution
+### Parallel Execution
 - Parallel executor assumes Effects<T> accurately describes all shared mutable state access.
 
 Parallel safety contract:
 - Effects<T> may over-approximate, but must not under-approximate,
 - the shared mutable state accessed by T.
+
+
+## Create a conflict-safe layered execution plan from an access effect system
+```
+using exe_set = ExecutionSet<Node<user_type_A>,Node<user_type_B>,Node<user_type_C>,...>;
+
+using plan = typename MakeSafeLayeredPlan<exe_set, WarnExecutionConfig>::type;
+using stats = PlanStats<plan>;
+
+UserContext user_ctx;
+UserThreadPool user_pool(stats::max_layer_width);
+ExecutePlanWithPool<plan, WarnExecutionConfig>::Run(user_pool,user_ctx);
+```
+
+If Submit is an alias, the following specialization is required
+```
+template<>
+struct PoolAdapter<UserThreadPool>
+{
+    template<typename F>
+    static auto Submit(UserThreadPool& pool, F&& f)
+    {
+        return pool.enqueue(std::forward<F>(f));
+    }
+};
+```
+
+
+### `PlanStats`
+a LayeredPlan synthesized from execution conflict analysis
+```
+using stats = PlanStats<MyPlan>;
+stats::layer_count
+stats::task_count
+stats::max_layer_width
+stats::has_parallel_layer
+stats::is_fully_sequential
+```
+
