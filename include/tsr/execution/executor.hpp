@@ -9,6 +9,7 @@ An execution platform for actually using the compiler's output.
 #include <iostream>
 #include <array>
 #include <future>
+#include <cstddef>
 // #include "tsr/graph/graph_dsl.hpp"
 // #include "tsr/compiler/topological_sort.hpp" // Delete the hierarchical DSL IR once it has been created.
 
@@ -44,6 +45,10 @@ namespace tsr
         static constexpr MissingExecutorPolicy missing_executor_policy = MissingExecutorPolicy::Warn;
         static constexpr bool emit_barrier_log = true;
     };
+
+    // ******************* PlanStats *******************
+    template<typename PlanT>
+    struct PlanStats;
 
     // =========================================== Validations ===========================================
     template <typename T, typename Context>
@@ -252,6 +257,37 @@ namespace tsr
         {
             ExecuteLayerPackAsync<LayerPackT, ConfigT>::Run(context);
         }
+    };
+
+    // ##### helpers #####
+    template<typename NodePackT>
+    struct NodeCounter;
+    template<typename... NodeTs>
+    struct NodeCounter<NodePack<NodeTs...>>
+    {
+        static constexpr std::size_t value = sizeof...(NodeTs);
+    };
+
+    constexpr std::size_t static_max_size(){return 0;}
+    constexpr std::size_t static_max_size(std::size_t x){ return x;}
+    template<typename... Rest>
+    constexpr std::size_t static_max_size(std::size_t x, Rest... rest)
+    {
+        auto y = static_max_size(rest...);
+        return x > y ? x : y;
+    }
+
+    template<typename... Layers>
+    struct PlanStats<SafeLayeredPlan<LayerPack<Layers...>>>
+    {
+        static constexpr std::size_t layer_count = sizeof...(Layers);
+
+        static constexpr std::size_t task_count = (NodeCounter<Layers>::value + ... + 0);
+        
+        static constexpr std::size_t max_layer_width = static_max_size(NodeCounter<Layers>::value...);
+
+        static constexpr bool has_parallel_layer = max_layer_width > 1;
+        static constexpr bool is_fully_sequential = max_layer_width <= 1;
     };
 
 }; // namespace tsr

@@ -81,7 +81,30 @@ int main()
     std::cerr << "=== LINEAR ORDER EXECUTION ===\n";
     ExecutePlan<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(test_ctx);// linear order
 
+    AsyncTestContext async_test_ctx{};
     std::cerr << "\n=== PARALLEL EXECUTION  ===\n";
-    ExecutePlanAsync<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(test_ctx);// Parallel execution
+    try
+    {
+        ExecutePlanAsync<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(async_test_ctx);// Parallel execution
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "\n[caught] " << e.what() << "\n";
+    }
+
+    // std::cerr << "\n";
+    // for(const auto& p : async_test_ctx.log)
+    // {
+    //     std::cerr << p << "\n";
+    // }
+
+    std::cerr << "\n ==== Test PlanStats ==== \n";
+    using CES_STATS = PlanStats<CES_TEST_SAFE_LAYRES_PLAN_RF>;
+    static_assert(CES_STATS::layer_count == 4, "error in PlanStats::layer_count");
+    static_assert(CES_STATS::task_count ==  5, "error in PlanStats::task_count");
+    static_assert(CES_STATS::max_layer_width == 2, "error in PlanStats::max_layer_width");
+    static_assert(CES_STATS::has_parallel_layer == true, "error in PlanStats::has_parallel_layer");
+    static_assert(CES_STATS::is_fully_sequential == false, "error in PlanStats::is_fully_sequential");
+
     return 0;
 }
