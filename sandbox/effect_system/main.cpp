@@ -15,6 +15,8 @@
 #include "user_thread_pool.hpp"
 #include "dsl_thread_pool_adapter.hpp"// Required for adapting to a thread pool.
 
+#include "tsr/visualizer/visualizer.hpp"
+
 int main()
 {
     // std::cout << "hello effect system\n";
@@ -113,10 +115,33 @@ int main()
 
     std::cerr << "\n ==== Test SafeLayeredPlan with runtime Thread Pool utility ==== \n";
     runtime::ThreadPool pool(CES_STATS::max_layer_width);
-    ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(pool,async_test_ctx);
+    // ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(pool,async_test_ctx);
 
     std::cerr << "\n ==== Test for uesr ThreadPool ====\n";
     es::MyThreadPool my_pool(CES_STATS::max_layer_width);
-    ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(my_pool,async_test_ctx);
+    // ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(my_pool,async_test_ctx);
+
+
+    // ===================================== Visualization Tests ===================================== 
+    std::cerr << "\n ==== Visualization Tests ==== \n";
+
+    // SequentialPlan
+    struct vs_sq_graph_tag{};
+    using vs_sq_graph = Graph<vs_sq_graph_tag, Arc<Node<Position>, Node<Velocity>>, Arc<Node<Velocity>, Node<Acceleration>>>;
+    using vs_sq_plan = typename MakeSequentialPlan<vs_sq_graph, ResolverDirection::RootFirst>::type;
+    visualizer::PrintPlan<vs_sq_plan>::Run();
+
+    std::cerr << "\n";
+    // SafeLayeredPlan
+    visualizer::PrintPlan<CES_TEST_SAFE_LAYRES_PLAN_RF>::Run();
+
+    std::cerr << "\n";
+    // HierarchicalPlan
+    using vs_sq_graph_2 = Graph<vs_sq_graph_tag, Arc<Node<Acceleration>, Node<Velocity>>, Arc<Node<Velocity>,Node<Position>>>;
+    struct vs_meta_graph_tag{};
+    using vs_meta_graph = Graph<vs_meta_graph_tag, Arc<Node<vs_sq_graph>, Node<vs_sq_graph_2>>>;
+    using vs_meta_plan = typename MakeHierarchicalPlan<vs_meta_graph, ResolverDirection::RootFirst, ResolverDirection::RootFirst, PlanKind::Sequential>::type;
+    visualizer::PrintPlan<vs_meta_plan>::Run();
+
     return 0;
 }
