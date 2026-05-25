@@ -290,4 +290,52 @@ namespace tsr
         static constexpr bool is_fully_sequential = max_layer_width <= 1;
     };
 
+    // ================= ExecutePlanWithPool =================
+    template<typename NodePackT, typename ConfigT>
+    struct ExecuteLayerWithPool;
+    template<typename... Ts, typename ConfigT>
+    struct ExecuteLayerWithPool<NodePack<Node<Ts>...>, ConfigT>
+    {
+        template<typename PoolT, typename Context>
+        static void Run(PoolT& pool, Context& context)
+        {
+            auto futures = std::array{
+                pool.Submit([&context]{
+                    ExecutorDispatch<Ts>::template Run<ConfigT>(context);
+                })...
+            };
+
+            for(auto& f : futures)
+            {
+                f.get();
+            }
+
+            BarrierDispatch<ConfigT>::Run(context);
+        }
+    };
+
+    template<typename LayerPackT, typename ConfigT>
+    struct ExecuteLayerPackWithPool;
+    template<typename... NodePackTs, typename ConfigT>
+    struct ExecuteLayerPackWithPool<LayerPack<NodePackTs...>, ConfigT>
+    {
+        template<typename PoolT, typename Context>
+        static void Run(PoolT& pool, Context& context)
+        {
+            (ExecuteLayerWithPool<NodePackTs, ConfigT>::Run(pool, context),...);
+        }
+    };
+
+    template<typename PlanT, typename ConfigT = DefaultExecutionConfig>
+    struct ExecutePlanWithPool;
+    template<typename LayerPackT, typename ConfigT>
+    struct ExecutePlanWithPool<SafeLayeredPlan<LayerPackT>,  ConfigT>
+    {
+        template<typename PoolT, typename Context>
+        static void Run(PoolT& pool, Context& context)
+        {
+            ExecuteLayerPackWithPool<LayerPackT, ConfigT>::Run(pool, context);
+        }
+    };
+    
 }; // namespace tsr

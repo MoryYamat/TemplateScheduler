@@ -24,7 +24,7 @@ namespace tsr::runtime
 
             for (std::size_t i = 0; i < worker_count; i++)
             {
-                workers_.emplace_back([this] { WorkerLoop(); });
+                workers_.emplace_back([this] { WorkerLoop(); });// start workers
             }
         }
 

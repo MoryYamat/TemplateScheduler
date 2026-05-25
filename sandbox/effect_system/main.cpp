@@ -10,6 +10,8 @@
 #include "dsl_effects.hpp"// Required for extraction
 
 
+#include "tsr/runtime/thread_pool.hpp"
+
 int main()
 {
     // std::cout << "hello effect system\n";
@@ -98,13 +100,18 @@ int main()
     //     std::cerr << p << "\n";
     // }
 
-    std::cerr << "\n ==== Test PlanStats ==== \n";
+    // std::cerr << "\n ==== Test PlanStats ==== \n";
     using CES_STATS = PlanStats<CES_TEST_SAFE_LAYRES_PLAN_RF>;
     static_assert(CES_STATS::layer_count == 4, "error in PlanStats::layer_count");
     static_assert(CES_STATS::task_count ==  5, "error in PlanStats::task_count");
     static_assert(CES_STATS::max_layer_width == 2, "error in PlanStats::max_layer_width");
     static_assert(CES_STATS::has_parallel_layer == true, "error in PlanStats::has_parallel_layer");
     static_assert(CES_STATS::is_fully_sequential == false, "error in PlanStats::is_fully_sequential");
+
+    std::cerr << "\n ==== Test SafeLayeredPlan withThread Pool ==== \n";
+    runtime::ThreadPool pool(CES_STATS::max_layer_width);
+
+    ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(pool,async_test_ctx);
 
     return 0;
 }
