@@ -264,3 +264,22 @@ stats::has_parallel_layer
 stats::is_fully_sequential
 ```
 
+## visualizer
+### PrintPlan
+You can use standard input/output to check the contents of the plan.
+```
+struct vs_sq_graph_tag{};
+using vs_sq_graph = Graph<vs_sq_graph_tag, Arc<Node<Position>, Node<Velocity>>, Arc<Node<Velocity>, Node<Acceleration>>>;
+using vs_sq_plan = typename MakeSequentialPlan<vs_sq_graph, ResolverDirection::RootFirst>::type;
+
+// #include "tsr/visualizer/vvisualizer.hpp"
+visualizer::PrintPlan<CES_TEST_SAFE_LAYRES_PLAN_RF>::Run();
+```
+
+It can be used with all plans.
+- `SequentialPlan`
+- `LayeredPlan`
+- `SafeLayeredPlan`
+- `HierarchicalPlan`
+
+The default argument for `PrintPlan::Run()` is `std::cerr`. `std::cout` and `std::clog` can also be used.
