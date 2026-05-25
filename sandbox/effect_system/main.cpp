@@ -12,6 +12,9 @@
 
 #include "tsr/runtime/thread_pool.hpp"
 
+#include "user_thread_pool.hpp"
+#include "dsl_thread_pool_adapter.hpp"// Required for adapting to a thread pool.
+
 int main()
 {
     // std::cout << "hello effect system\n";
@@ -108,10 +111,12 @@ int main()
     static_assert(CES_STATS::has_parallel_layer == true, "error in PlanStats::has_parallel_layer");
     static_assert(CES_STATS::is_fully_sequential == false, "error in PlanStats::is_fully_sequential");
 
-    std::cerr << "\n ==== Test SafeLayeredPlan withThread Pool ==== \n";
+    std::cerr << "\n ==== Test SafeLayeredPlan with runtime Thread Pool utility ==== \n";
     runtime::ThreadPool pool(CES_STATS::max_layer_width);
-
     ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(pool,async_test_ctx);
 
+    std::cerr << "\n ==== Test for uesr ThreadPool ====\n";
+    es::MyThreadPool my_pool(CES_STATS::max_layer_width);
+    ExecutePlanWithPool<CES_TEST_SAFE_LAYRES_PLAN_RF, WarnExecutionConfig>::Run(my_pool,async_test_ctx);
     return 0;
 }

@@ -14,6 +14,7 @@ An execution platform for actually using the compiler's output.
 // #include "tsr/compiler/topological_sort.hpp" // Delete the hierarchical DSL IR once it has been created.
 
 #include "tsr/plan/plan.hpp"
+#include "tsr/adapter/adapter.hpp"
 
 namespace tsr
 {
@@ -300,8 +301,8 @@ namespace tsr
         static void Run(PoolT& pool, Context& context)
         {
             auto futures = std::array{
-                pool.Submit([&context]{
-                    ExecutorDispatch<Ts>::template Run<ConfigT>(context);
+                    PoolAdapter<PoolT>::Submit(pool, [&context] {
+                        ExecutorDispatch<Ts>::template Run<ConfigT>(context);
                 })...
             };
 
