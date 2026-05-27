@@ -4,6 +4,8 @@
 #include <string>
 #include <type_traits>
 #include "tsr/plan/plan.hpp"
+#include "tsr/analysis/plan_stats.hpp"
+#include "tsr/analysis/plan_analyzer.hpp"
 
 namespace tsr::visualizer
 {
@@ -148,6 +150,38 @@ namespace tsr::visualizer
             os << std::string(indent + 2, ' ') << "SubPlans\n";
 
             PrintSubPlanPack<SubPlanPackT>::Run(os, indent + 4);
+        }
+    };
+
+    // PrintPlanStats<Plan>::Run();
+    template <typename PlanT>
+    struct PrintPlanStats
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            using stats = PlanStats<PlanT>;
+            os << "PlanStats\n";
+
+            os << "  layer_count: " << stats::layer_count << "\n";
+            os << "  task_count: " << stats::task_count << "\n";
+            os << "  max_layer_width: " << stats::max_layer_width << "\n";
+            os << "  has_parallel_layer: " << std::boolalpha << stats::has_parallel_layer << "\n";
+            os << "  is_fully_sequential: " << std::boolalpha << stats::is_fully_sequential << "\n";
+        }
+    };
+
+    template <typename PlanT>
+    struct PrintParallelismAnalysis
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            using result = typename AnalyzeParallelism<PlanT>::type;
+
+            os << "ParallelismAnalysis\n";
+            os << "  layer_count: " << result::layer_count << "\n";
+            os << "  sequential_layer_count: " << result::sequential_layer_count << "\n";
+            os << "  parallel_layer_count: " << result::parallel_layer_count << "\n";
+            os << "  parallelism_ratio: " << result::parallelism_ratio << "\n";
         }
     };
 } // namespace tsr::visualizer

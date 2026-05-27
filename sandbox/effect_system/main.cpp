@@ -4,7 +4,9 @@
 #include "tsr/effects/effect.hpp"     // dsl
 #include "tsr/plan/plan.hpp"          // required for making plan
 #include "tsr/executor/executor.hpp"  // required for execution plans
-#include "tsr/effects/validation.hpp" //  Required for verification testing
+#include "tsr/effects/validation.hpp" // Required for verification testing
+#include "tsr/analysis/plan_stats.hpp"// Required for plan stats
+#include "tsr/analysis/plan_analyzer.hpp"
 
 #include "dsl_descriptions.hpp" // Required for extraction
 #include "dsl_effects.hpp"      // Required for extraction
@@ -121,13 +123,14 @@ int main()
     //     std::cerr << p << "\n";
     // }
 
-    // std::cerr << "\n ==== Test PlanStats ==== \n";
+    std::cerr << "\n ==== Test PlanStats ==== \n";
     using CES_STATS = PlanStats<CES_TEST_SAFE_LAYRES_PLAN_RF>;
     static_assert(CES_STATS::layer_count == 4, "error in PlanStats::layer_count");
     static_assert(CES_STATS::task_count == 5, "error in PlanStats::task_count");
     static_assert(CES_STATS::max_layer_width == 2, "error in PlanStats::max_layer_width");
     static_assert(CES_STATS::has_parallel_layer == true, "error in PlanStats::has_parallel_layer");
     static_assert(CES_STATS::is_fully_sequential == false, "error in PlanStats::is_fully_sequential");
+    visualizer::PrintPlanStats<CES_TEST_SAFE_LAYRES_PLAN_RF>::Run();
 
     std::cerr << "\n ==== Test SafeLayeredPlan with runtime Thread Pool utility ==== \n";
     runtime::ThreadPool pool(CES_STATS::max_layer_width);
@@ -200,8 +203,14 @@ int main()
     // struct Test_Tag{};
     // using DP_Plan = typename MakeSafeLayeredPlan<Test_Tag, ExecutionSet<DP_PROC_N_W>>::type;// This should result in a compilation error.
 
-    // TODO:
-    // - ValidatePlanNodesUnique: Plan 全体で 同じ Node が重複していないか
+    std::cerr << "\n ================ Plan Analyzer Test ================ \n";
+    using analysis_result = typename AnalyzeParallelism<CES_TEST_SAFE_LAYRES_PLAN_RF>::type;
+    static_assert(analysis_result::layer_count == 4);
+    static_assert(analysis_result::sequential_layer_count == 3);
+    static_assert(analysis_result::parallel_layer_count == 1);
+    static_assert(analysis_result::parallelism_ratio == 0.25);
+    
+    visualizer::PrintParallelismAnalysis<CES_TEST_SAFE_LAYRES_PLAN_RF>::Run();
 
     return 0;
 }

@@ -4,7 +4,7 @@ Users explicitly verify the plan.
 
 #pragma once
 
-#include "tsr/ir/relation.hpp"
+// #include "tsr/ir/relation.hpp"
 #include "tsr/plan/plan.hpp"
 #include "tsr/effects/access_analysis.hpp"
 #include <type_traits>

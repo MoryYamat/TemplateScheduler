@@ -138,7 +138,7 @@ Node<Graph<...>>
 
 ## Example
 
-```
+```cpp
 using A = Graph<...>;
 using B = Graph<...>;
 
@@ -165,53 +165,51 @@ using Plan =
 ### Execution Definition
 - User-specific functions can be defined in one of the following formats 
 - if multiple exist, partial specializations are used, with the one for which a Context exists taking precedence.
-```
-    struct TestContext
-    {
-        std::vector<std::string> log;
-    };
+```cpp
+struct TestContext
+{
+    std::vector<std::string> log;
+};
 
-    struct A{};
-    struct B{};
-    struct C
+struct A{};
+struct B{};
+struct C
+{
+    static void Run(TestContext& ctx)
     {
-        static void Run(TestContext& ctx)
-        {
-            ctx.log.push_back("static_context");
-        }
-    };
-    struct D
+        ctx.log.push_back("static_context");
+    }
+};
+struct D
+{
+    inline static bool called = false;
+   static void Run()
+   {
+       called = true;
+   }
+};
+
+// ============== Defining a user `Run` function through partial specialization of `Executor` ============== 
+// By setting ExecutionConfing in ConfigT, you can select how to run the program (Assert/Warn/Skip).
+template<>
+struct Executor<A>
+{
+    template<typename ConfigT, typename Context>
+    static void Run(Context& ctx)
     {
-        inline static bool called = false;
+        ctx.log.push_back("executor_config");
+    }
+};
 
-        static void Run()
-        {
-            called = true;
-        }
-    };
-
-
-    // ============== Defining a user `Run` function through partial specialization of `Executor` ============== 
-    // By setting ExecutionConfing in ConfigT, you can select how to run the program (Assert/Warn/Skip).
-    template<>
-    struct Executor<A>
+template<>
+struct Executor<B>
+{
+    template<typename Context>
+    static void Run(Context& ctx)
     {
-        template<typename ConfigT, typename Context>
-        static void Run(Context& ctx)
-        {
-            ctx.log.push_back("executor_config");
-        }
-    };
-
-    template<>
-    struct Executor<B>
-    {
-        template<typename Context>
-        static void Run(Context& ctx)
-        {
-            ctx.log.push_back("executor_plain");
-        }
-    };
+        ctx.log.push_back("executor_plain");
+    }
+};
 ```
 
 #### Missing Executor Policy
@@ -229,7 +227,7 @@ Parallel safety contract:
 
 
 ## Create a conflict-safe layered execution plan from an access effect system
-```
+```cpp
 using exe_set = ExecutionSet<Node<user_type_A>,Node<user_type_B>,Node<user_type_C>,...>;
 
 using plan = typename MakeSafeLayeredPlan<exe_set, WarnExecutionConfig>::type;
@@ -241,7 +239,7 @@ ExecutePlanWithPool<plan, WarnExecutionConfig>::Run(user_pool,user_ctx);
 ```
 
 If Submit is an alias, the following specialization is required
-```
+```cpp
 template<>
 struct PoolAdapter<UserThreadPool>
 {
@@ -265,16 +263,17 @@ stats::has_parallel_layer
 stats::is_fully_sequential
 ```
 
-## visualizer
-### PrintPlan
-You can use standard input/output to check the contents of the plan.
-```
-struct vs_sq_graph_tag{};
-using vs_sq_graph = Graph<vs_sq_graph_tag, Arc<Node<Position>, Node<Velocity>>, Arc<Node<Velocity>, Node<Acceleration>>>;
-using vs_sq_plan = typename MakeSequentialPlan<vs_sq_graph, ResolverDirection::RootFirst>::type;
+## Visualize
+You can display Plan information using the following function.
+```cpp
+// Output the structure of Pan as a string to standard input/output.
+visualizer::PrintPlan<Plan>::Run();
 
-// #include "tsr/visualizer/visualizer.hpp"
-visualizer::PrintPlan<CES_TEST_SAFE_LAYRES_PLAN_RF>::Run();
+// Output structural statistics information of the plan to standard input/output.
+visualizer::PrintPlanStats<Plan>::Run();
+
+// Output parallel execution plan statistics to standard input/output.
+visualizer::PrintParallelismAnalysis<Plan>::Run();
 ```
 
 It can be used with all plans.
@@ -291,4 +290,11 @@ hard validation
 
 
 ## Analysis
-diagnostic
+```
+// Calculate the number of linearly ordered layers, the number of parallelized layers, and the parallelization ratio for the plan.
+using analysis_result = typename AnalyzeParallelism<Plan>::type;
+
+// These results can be displayed all at once using the following function.
+visualizer::PrintParallelismAnalysis<Plan>::Run();
+```
+
