@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "tsr/execution/executor.hpp"
+#include "tsr/executor/executor.hpp"
 #include "components.hpp"
 
 namespace tsr

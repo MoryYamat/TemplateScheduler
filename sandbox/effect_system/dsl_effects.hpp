@@ -40,4 +40,30 @@ namespace tsr
         using reads = ResourcePack<es::Position>;
         using writes = ResourcePack<es::Camera>;
     };
+
+    // test for duplicate in reads/writes detection
+    template<>
+    struct Effects<es::DUP_R>
+    {
+        using reads = ResourcePack<es::Position, es::Collision, es::Position>;
+        using writes = ResourcePack<>;
+    };
+    template<>
+    struct Effects<es::DUP_W>
+    {
+        using reads = ResourcePack<>;
+        using writes = ResourcePack<es::Position, es::Collision, es::Position>;
+    };
+
+    // test for effects completeness
+    template<>
+    struct Effects<es::EC_R>
+    {
+        using writes = ResourcePack<es::Position>;
+    };
+    template<>
+    struct Effects<es::EC_W>
+    {
+        using reads = ResourcePack<es::Position>;
+    };
 }// es

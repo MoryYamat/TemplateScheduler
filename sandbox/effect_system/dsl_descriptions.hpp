@@ -20,4 +20,12 @@ namespace tsr
     using CES_PROC_N_CAMERA = Node<es::CameraController>;
     // using CES_PROC_N_INPUT =Node<es::InputSystem>;
     using CES_PROC_N_INTENT = Node<es::IntentSystem>;
+
+    // test for duplicate in reads/writes detection
+    using DP_PROC_N_R = Node<es::DUP_R>;
+    using DP_PROC_N_W = Node<es::DUP_W>;
+
+    // test for effects completeness
+    using EC_PROC_N_R = Node<es::EC_R>;
+    using EC_PROC_N_W = Node<es::EC_W>;
 }//namespace tsr

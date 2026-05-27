@@ -5,6 +5,8 @@
 #include "tsr/effects/effect.hpp"
 #include "tsr/effects/access_analysis.hpp"
 
+#include "tsr/effects/validation.hpp"
+
 namespace tsr
 {
     // ================================================================ CONFIG ================================================================
@@ -56,7 +58,7 @@ namespace tsr
     {
     };
 
-    // @brief Planning the execution of parallel layers / 
+    // @brief Planning the execution of parallel layers /
     // LayeredPlan reads graph topology as precedence constraint
     template <typename LayerPackT>
     struct LayeredPlan
@@ -276,9 +278,9 @@ namespace tsr
         using layer_pack_type = LayerPackT;
     };
 
-    template<typename LayeredPlanT>
+    template <typename LayeredPlanT>
     struct ToSafeLayeredPlan;
-    template<typename LayeredPackT>
+    template <typename LayeredPackT>
     struct ToSafeLayeredPlan<LayeredPlan<LayeredPackT>>
     {
         using type = SafeLayeredPlan<LayeredPackT>;
@@ -287,7 +289,13 @@ namespace tsr
     template <typename EffectTag, typename ExecutionSetT, ResolverDirection Direction = ResolverDirection::RootFirst>
     struct MakeSafeLayeredPlan
     {
+        static_assert(ValidateExecutionSetUnique<ExecutionSetT>::value, "ExecutionSet contains duplicated nodes");
+        static_assert(ValidateExecutionSetEffects<ExecutionSetT>::value,
+                      "Effects<T> contains duplicated resources in reads or writes");
+        static_assert(ValidateEffectsCompleteness<ExecutionSetT>::value, "All nodes in ExecutionSet must define Effects<T>");
+
         using nodes = typename ExecutionSetToNodePack<ExecutionSetT>::type;
+
         using relations = typename CollectConflictRelations<RelationPack<>, ExecutionSetT>::type;
         using ir = GraphIR<EffectTag, nodes, relations>;
 

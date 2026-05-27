@@ -4,6 +4,9 @@
 #include "tsr/effects/effect.hpp"
 #include "tsr/graph/graph_dsl.hpp"
 #include "tsr/ir/relation.hpp"
+
+#include "tsr/effects/validation.hpp"
+
 namespace tsr
 {
     // ==================================== SafeLayeredPlan ====================================
@@ -76,6 +79,7 @@ namespace tsr
     {
         using A_reads = typename ExtractReads<Effects<A>>::type;
         using B_writes = typename ExtractWrites<Effects<B>>::type;
+
         using type = ResourcesOverlap<A_reads, B_writes>;
     };
 

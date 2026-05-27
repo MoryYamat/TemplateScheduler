@@ -2,7 +2,7 @@
 
 #include "graph_description.hpp"
 #include "tsr/compiler/topological_sort.hpp"
-#include "tsr/execution/executor.hpp"
+#include "tsr/executor/executor.hpp"
 #include "tsr/graph/graph_dsl.hpp"
 // #include "executor.hpp"
 
