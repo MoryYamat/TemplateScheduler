@@ -184,6 +184,129 @@ namespace tsr::visualizer
             os << "  parallelism_ratio: " << result::parallelism_ratio << "\n";
         }
     };
+
+    template <typename RelationT>
+    struct PrintRelation;
+    template <typename FirstT, typename SecondT>
+    struct PrintRelation<Relation<Node<FirstT>, Node<SecondT>>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            os << "  " << typeid(FirstT).name() << " <-> " << typeid(SecondT).name() << "\n";
+        }
+    };
+
+    template <typename RelationPackT>
+    struct PrintRelationPack;
+    template <typename... RelationTs>
+    struct PrintRelationPack<RelationPack<RelationTs...>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            (PrintRelation<RelationTs>::Run(os), ...);
+        }
+    };
+
+    template <typename T>
+    struct PrintConflictAnalysis;
+
+    template <typename... NodeTs>
+    struct PrintConflictAnalysis<ExecutionSet<NodeTs...>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            using relations = typename AnalyzeConflicts<ExecutionSet<NodeTs...>>::type::conflict_relations;
+
+            os << "ConflictAnalysis: \n";
+            PrintRelationPack<relations>::Run(os);
+        }
+    };
+    template <typename ConflictAnalysisResultT>
+    struct PrintConflictAnalysis<ConflictAnalysisResult<ConflictAnalysisResultT>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            os << "ConflictAnalysis: \n";
+            PrintRelationPack<ConflictAnalysisResultT>::Run(os);
+        }
+    };
+    template <typename... RelationTs>
+    struct PrintConflictAnalysis<RelationPack<RelationTs...>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            os << "ConflictAnalysis: \n";
+            PrintRelationPack<RelationPack<RelationTs...>>::Run(os);
+        }
+    };
+
+    template<typename... NodeTs>
+    struct PrintNodes
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            ((os << "      " << typeid(NodeTs).name() << "\n"), ...);
+        }
+    };
+    template<typename... Ts>
+    struct PrintNodes<Node<Ts>...>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            ((os << "      " << typeid(Ts).name() << "\n"), ...);
+        }
+    };
+    
+
+    template<typename T>
+    struct PrintResourceDependency;
+    template<typename ResourceT, typename... ReaderNodeTs,typename... WriterNodeTs>
+    struct PrintResourceDependency<ResourceDependency<ResourceT, NodePack<ReaderNodeTs...>, NodePack<WriterNodeTs...>>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            os << "  Resource: " << typeid(ResourceT).name() << "\n";
+            os << "    Readers: \n";
+            PrintNodes<ReaderNodeTs...>::Run(os);
+            os << "    Writers: \n";
+            PrintNodes<WriterNodeTs...>::Run(os);
+            os << "\n";
+        }
+    };
+
+    template<typename DependencyPackT>
+    struct PrintAllResourceDependency;
+    template<typename... DependenciesT>
+    struct PrintAllResourceDependency<ResourceDependencyAnalysisResult<DependenciesT...>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            ((PrintResourceDependency<DependenciesT>::Run(os)), ...);
+        }
+    };
+
+    template <typename T>
+    struct PrintResourceDependencyAnalysis;
+    template <typename... NodeTs>
+    struct PrintResourceDependencyAnalysis<ExecutionSet<NodeTs...>>
+    {
+        static void Run(std::ostream& os = std::cerr) 
+        {
+            using dependencies = typename AnalyzeResourceDependencies<ExecutionSet<NodeTs...>>::type;
+
+            os << "ResourceDependencyAnalysis: \n";
+            PrintAllResourceDependency<dependencies>::Run(os);
+        }
+    };
+    template <typename... ResourceDependencies>
+    struct PrintResourceDependencyAnalysis<ResourceDependencyAnalysisResult<ResourceDependencies...>>
+    {
+        static void Run(std::ostream& os = std::cerr) 
+        {
+            os << "ResourceDependencyAnalysis: \n";
+            PrintAllResourceDependency<ResourceDependencyAnalysisResult<ResourceDependencies...>>::Run(os);
+        }
+    };
 } // namespace tsr::visualizer
 // sequential plan
 

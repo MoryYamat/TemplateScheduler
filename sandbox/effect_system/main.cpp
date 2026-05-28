@@ -1,11 +1,11 @@
 #include <iostream>
 #include <type_traits>
 
-#include "tsr/effects/effect.hpp"     // dsl
-#include "tsr/plan/plan.hpp"          // required for making plan
-#include "tsr/executor/executor.hpp"  // required for execution plans
-#include "tsr/effects/validation.hpp" // Required for verification testing
-#include "tsr/analysis/plan_stats.hpp"// Required for plan stats
+#include "tsr/effects/effect.hpp"      // dsl
+#include "tsr/plan/plan.hpp"           // required for making plan
+#include "tsr/executor/executor.hpp"   // required for execution plans
+#include "tsr/effects/validation.hpp"  // Required for verification testing
+#include "tsr/analysis/plan_stats.hpp" // Required for plan stats
 #include "tsr/analysis/plan_analyzer.hpp"
 
 #include "dsl_descriptions.hpp" // Required for extraction
@@ -198,7 +198,8 @@ int main()
 
     static_assert(ValidatePlanNodesUnique<CES_TEST_SAFE_LAYRES_PLAN_RF>::value);
 
-    using Invalid_Duplicated_Nodes_Plan = SafeLayeredPlan<LayerPack<NodePack<EC_PROC_N_R>, NodePack<EC_PROC_N_R, EC_PROC_N_W>>>;
+    using Invalid_Duplicated_Nodes_Plan =
+        SafeLayeredPlan<LayerPack<NodePack<EC_PROC_N_R>, NodePack<EC_PROC_N_R, EC_PROC_N_W>>>;
     static_assert(!ValidatePlanNodesUnique<Invalid_Duplicated_Nodes_Plan>::value);
     // struct Test_Tag{};
     // using DP_Plan = typename MakeSafeLayeredPlan<Test_Tag, ExecutionSet<DP_PROC_N_W>>::type;// This should result in a compilation error.
@@ -209,8 +210,56 @@ int main()
     static_assert(analysis_result::sequential_layer_count == 3);
     static_assert(analysis_result::parallel_layer_count == 1);
     static_assert(analysis_result::parallelism_ratio == 0.25);
-    
+
     visualizer::PrintParallelismAnalysis<CES_TEST_SAFE_LAYRES_PLAN_RF>::Run();
+
+    std::cerr << "\n";
+    using analysis_conflict_result = AnalyzeConflicts<CES_EXE_SET>::type::conflict_relations;
+    using Expected_analysis_conflict_result =
+        RelationPack<Relation<Node<IntentSystem>, Node<Integrate>>, Relation<Node<Integrate>, Node<CollisionDetection>>,
+                     Relation<Node<Integrate>, Node<CameraController>>, Relation<Node<Integrate>, Node<Renderer>>,
+                     Relation<Node<CameraController>, Node<Renderer>>>;
+    static_assert(std::is_same_v<analysis_conflict_result, Expected_analysis_conflict_result>);
+    visualizer::PrintConflictAnalysis<CES_EXE_SET>::Run();
+    // visualizer::PrintConflictAnalysis<analysis_conflict_result>::Run();
+    // visualizer::PrintConflictAnalysis<analysis_conflict>::Run();
+
+    std::cerr << "\n";
+    using CR_EXE_SET = ExecutionSet<CES_PROC_N_INTEG, CES_PROC_N_INTENT>;
+    using collect_resources_res = typename CollectAllResources<ResourcePack<>, CR_EXE_SET>::type;
+    using expected_collect_resources_res = ResourcePack<Intent, Velocity, Acceleration, Position, Input, Intent>;
+    static_assert(std::is_same_v<collect_resources_res, expected_collect_resources_res>);
+    // std::cerr << "collect_resources_res = " << typeid(collect_resources_res).name() << "\n";
+
+    using ces_collect_readers_for_resource = typename CollectReadersForResource<NodePack<>, Position, CES_EXE_SET>::type;
+    // std::cerr << "ces_collect_readers_for_resource_Res = " << typeid(ces_collect_readers_for_resource).name() << "\n";
+    using expected_ces_collect_readers_for_resource = NodePack<CES_PROC_N_COLL, CES_PROC_N_CAMERA, CES_PROC_N_RENDER>;
+    static_assert(std::is_same_v<ces_collect_readers_for_resource,expected_ces_collect_readers_for_resource>);
+    using ces_collect_writers_for_resource = typename CollectWritersForResource<NodePack<>, Position, CES_EXE_SET>::type;
+    using expected_ces_collect_writers_for_resource = NodePack<CES_PROC_N_INTEG>;
+    static_assert(std::is_same_v<ces_collect_writers_for_resource, expected_ces_collect_writers_for_resource>);
+
+    // using ces_build_resource_dependency = typename BuildResourceDependency<Position, CES_EXE_SET>::type;
+    // std::cerr <<"ces_build_resource_dependency_Res = " << typeid(ces_build_resource_dependency).name() <<"\n";
+    using CES_Analyze_Resource_Dependencies = typename AnalyzeResourceDependencies<CES_EXE_SET>::type;
+    using Expected_CES_Analyze_Resource_Dependencies = ResourceDependencyAnalysisResult<
+        ResourceDependency<Input,   NodePack<CES_PROC_N_INTENT>, NodePack<>>,
+        ResourceDependency<Intent,  NodePack<CES_PROC_N_INTEG>, NodePack<CES_PROC_N_INTENT>>,
+        ResourceDependency<Velocity,  NodePack<CES_PROC_N_INTEG>, NodePack<>>,
+        ResourceDependency<Acceleration,  NodePack<CES_PROC_N_INTEG>, NodePack<>>,
+        ResourceDependency<Position,  NodePack<CES_PROC_N_COLL,CES_PROC_N_CAMERA,CES_PROC_N_RENDER>, NodePack<CES_PROC_N_INTEG>>,
+        ResourceDependency<Collision,  NodePack<CES_PROC_N_COLL>, NodePack<>>,
+        ResourceDependency<CollisionMask,  NodePack<CES_PROC_N_COLL>, NodePack<>>,
+        ResourceDependency<CollisionResult,  NodePack<>, NodePack<CES_PROC_N_COLL>>,
+        ResourceDependency<Camera,  NodePack<CES_PROC_N_RENDER>, NodePack<CES_PROC_N_CAMERA>>
+    >;
+    static_assert(std::is_same_v<CES_Analyze_Resource_Dependencies, Expected_CES_Analyze_Resource_Dependencies>);
+    visualizer::PrintResourceDependencyAnalysis<CES_EXE_SET>::Run();
+    // std::cerr << "CES_Analyze_Resource_Dependency_Res = \n  " << typeid(CES_Analyze_Resource_Dependencies).name() <<"\n";
+    // TODO:
+    // 2. Critical path analysis:       Planの中で、並列化しても短縮できない最長経路を見る
+    // 3. Resource dependency analysis: task ではなく resource 側から 見る
+    // 5. Diagnostics:                  analysis結果をもとに「問題・改善候補」を出す層
 
     return 0;
 }
