@@ -51,13 +51,13 @@ namespace tsr
     template <typename IR>
     struct Validate;
 
-    template <typename Tag, typaname NodePackT, typename Relations>
+    template <typename Tag, typename NodePackT, typename Relations>
     struct Validate<GraphIR<Tag, NodePackT, Relations>>
     {
         static_assert(IsUniqueRelations<Relations>::value, "Duplicated relations detected");
 
         static_assert(!HasBidirectionalRelationInPack<Relations>::value, "Bidirectional relations are not allowed");
 
-        using type = GraphIR<Tag, Relations>;
+        using type = GraphIR<Tag, NodePackT, Relations>;
     };
 } // namespace tsr

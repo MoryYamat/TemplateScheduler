@@ -3,7 +3,7 @@
 
 #include "tsr/effects/effect.hpp"      // dsl
 #include "tsr/plan/plan.hpp"           // required for making plan
-#include "tsr/executor/executor.hpp"   // required for execution plans
+#include "tsr/execution/executor.hpp"   // required for execution plans
 #include "tsr/effects/validation.hpp"  // Required for verification testing
 #include "tsr/analysis/plan_stats.hpp" // Required for plan stats
 #include "tsr/analysis/plan_analyzer.hpp"
@@ -16,8 +16,8 @@
 #include "user_thread_pool.hpp"
 #include "dsl_thread_pool_adapter.hpp" // Required for adapting to a thread pool.
 
-#include "tsr/visualizer/visualizer.hpp"
-#include "tsr/validator/plan_validation.hpp"
+#include "tsr/visualization/visualizer.hpp"
+#include "tsr/validation/plan_validation.hpp"
 
 int main()
 {

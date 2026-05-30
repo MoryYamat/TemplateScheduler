@@ -316,6 +316,7 @@ namespace tsr
         using type = typename CollectEstimatedCriticalPathImpl<NodePack<>, LayerPack<Layers...>>::type;
     };
 
+    // ********** Estimated Critical Path Results ********** 
     template <typename PlanT>
     struct AnalyzeEstimatedCriticalPath;
     template <typename... LayerTs>

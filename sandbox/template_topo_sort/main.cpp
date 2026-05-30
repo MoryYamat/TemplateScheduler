@@ -2,14 +2,14 @@
 
 #include "graph_description.hpp"
 #include "tsr/compiler/topological_sort.hpp"
-#include "tsr/executor/executor.hpp"
+#include "tsr/execution/executor.hpp"
 #include "tsr/graph/graph_dsl.hpp"
 // #include "executor.hpp"
 
 #include "executors.hpp"
 #include "tsr/ir/relation.hpp"
 
-#include "tsr/visualizer/visualizer.hpp"
+#include "tsr/visualization/visualizer.hpp"
 
 #include <vector>
 #include <string>
