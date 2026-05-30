@@ -8,7 +8,8 @@
 
 #include "executors.hpp"
 #include "tsr/ir/relation.hpp"
-// build compile time dag
+
+#include "tsr/visualizer/visualizer.hpp"
 
 #include <vector>
 #include <string>
@@ -341,6 +342,8 @@ int main()
     static_assert(std::is_same_v<Actual_Hierarchical_Override_HL, Expected_Hierarchical_Override>,
                   "HierarchicalPlan Override failed");
 
+
+    // visualizer::PrintLayeredPlanDiagnostics<LayeredPlan_Test_RF>::Run();
     // std::cerr << "LayeredPlan_Test_RF_Result = " << typeid(LayeredPlan_Test_RF).name() << "\n";
     // std::cerr << "\nLayeredPlan_Test_LF_Result = " << typeid(LayeredPlan_Test_LF).name() << "\n";
     //std::cerr << "uqniue_nodes_result = " << typeid(uqniue_nodes_result).name() << "\n";

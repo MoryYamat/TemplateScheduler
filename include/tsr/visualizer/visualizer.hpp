@@ -341,4 +341,43 @@ namespace tsr::visualizer
             PrintEstimatedCriticalPathAnalysis<result>::Run(os);
         }
     };
+
+    template <typename PlanT>
+    struct PrintSafeLayeredPlanDiagnostics
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            using stats = PlanStats<PlanT>;
+            using parallelism = typename AnalyzeParallelism<PlanT>::type;
+            using estimated_cp = typename AnalyzeEstimatedCriticalPath<PlanT>::type;
+
+            os << "Diagnostics:\n";
+
+            os << "  layer_count: " << stats::layer_count << "\n";
+            os << "  task_count: " << stats::task_count << "\n";
+
+            os << "  max_layer_width: " << stats::max_layer_width << "\n";
+
+            os << "  parallel_layer_count: " << parallelism::parallel_layer_count << "\n";
+
+            os << "  sequential_layer_count: " << parallelism::sequential_layer_count << "\n";
+
+            os << "  parallelism_ratio: " << parallelism::parallelism_ratio << "\n";
+
+            os << "  estimated_critical_path_cost: " << estimated_cp::critical_path_cost << "\n";
+
+            if constexpr (stats::is_fully_sequential)
+            {
+                os << "  note: plan is fully sequential\n";
+            }
+
+            if constexpr (stats::has_parallel_layer)
+            {
+                os << "  note: plan contains parallelizable layers\n";
+            }
+
+            os << "\n  estimated_critical_path:\n";
+            PrintNodePack<typename estimated_cp::critical_path>::Run(os, 4);
+        }
+    };
 } // namespace tsr::visualizer

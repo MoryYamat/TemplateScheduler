@@ -283,6 +283,24 @@ stats::has_parallel_layer
 stats::is_fully_sequential
 ```
 
+
+## Validations
+hard validation
+
+```cpp
+// Verify that the nodes included in SafeLayeredPlan are unique.
+ValidatePlanNodesUnique<Plan>::value
+```
+
+## Analysis
+```
+// Calculate the number of linearly ordered layers, the number of parallelized layers, and the parallelization ratio for the plan.
+using analysis_result = typename AnalyzeParallelism<Plan>::type;
+
+// These results can be displayed all at once using the following function.
+visualizer::PrintParallelismAnalysis<Plan>::Run();
+```
+
 ## Visualize
 You can display Plan information using the following function.
 ```cpp
@@ -311,20 +329,8 @@ It can be used with all plans.
 The default argument for `PrintPlan::Run()` is `std::cerr`. `std::cout` and `std::clog` can also be used.
 
 
-## Validations
-hard validation
+### diagnostics
 
-```cpp
-// Verify that the nodes included in SafeLayeredPlan are unique.
-ValidatePlanNodesUnique<Plan>::value
 ```
-
-## Analysis
+PrintLayeredPlanDiagnostics<Plan>::Run();
 ```
-// Calculate the number of linearly ordered layers, the number of parallelized layers, and the parallelization ratio for the plan.
-using analysis_result = typename AnalyzeParallelism<Plan>::type;
-
-// These results can be displayed all at once using the following function.
-visualizer::PrintParallelismAnalysis<Plan>::Run();
-```
-

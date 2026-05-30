@@ -266,8 +266,10 @@ int main()
 
     // std::cerr << "CES_Analyze_Resource_Dependency_Res = \n  " << typeid(CES_Analyze_Resource_Dependencies).name() <<"\n";
     // TODO:
-    // 2. Critical path analysis:       Planの中で、並列化しても短縮できない最長経路を見る
     // 5. Diagnostics:                  analysis結果をもとに「問題・改善候補」を出す層
 
+    std::cerr << "\n ========== Diagnostics ========== \n";
+    visualizer::PrintSafeLayeredPlanDiagnostics<CES_SAFE_LAYERED_PLAN_RF>::Run();
+    
     return 0;
 }
