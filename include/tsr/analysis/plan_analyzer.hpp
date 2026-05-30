@@ -5,6 +5,8 @@
 
 #include "tsr/effects/access_analysis.hpp"
 #include "tsr/plan/plan.hpp"
+
+#include "tsr/analysis/costs.hpp"
 #include "tsr/analysis/plan_stats.hpp"
 
 namespace tsr
@@ -141,8 +143,8 @@ namespace tsr
     template <typename ResultPackT, typename ResourceT, typename FirstNodeT, typename... RestNodeTs>
     struct CollectWritersForResource<ResultPackT, ResourceT, ExecutionSet<FirstNodeT, RestNodeTs...>>
     {
-        using first_writes  = typename ExtractWrites<FirstNodeT>::type;
-        using next_result = std::conditional_t<ResourcePackContains<ResourceT, first_writes >::value,
+        using first_writes = typename ExtractWrites<FirstNodeT>::type;
+        using next_result = std::conditional_t<ResourcePackContains<ResourceT, first_writes>::value,
                                                typename AppendNode<ResultPackT, FirstNodeT>::type, ResultPackT>;
         using type = CollectWritersForResource<next_result, ResourceT, ExecutionSet<RestNodeTs...>>::type;
     };
@@ -225,5 +227,116 @@ namespace tsr
         using resources = typename UniqueResourcePack<raw_resources>::type;
         using type = typename BuildResourceDependency<ResourceDependencyAnalysisResult<>, resources,
                                                       ExecutionSet<NodeTs...>>::type;
+    };
+
+    // ======================================= Cost Analysis =======================================
+
+    template <std::size_t Cost, typename PathT>
+    struct EstimatedCriticalPathAnalysisResult
+    {
+        static constexpr std::size_t critical_path_cost = Cost;
+        using critical_path = PathT; // NodePack<...>
+    };
+
+    template <typename NodeT>
+    struct NodeCost;
+    template <typename T>
+    struct NodeCost<Node<T>>
+    {
+        static constexpr std::size_t value = DeclaredCost<T>::value;
+    };
+
+    template <typename NodePackT>
+    struct LayerCost;
+    template <>
+    struct LayerCost<NodePack<>>
+    {
+        static constexpr std::size_t value = 0;
+    };
+    template <typename... NodeTs>
+    struct LayerCost<NodePack<NodeTs...>>
+    {
+        static constexpr std::size_t value = static_max_size(NodeCost<NodeTs>::value...);
+    };
+
+    // ***** Max Cost *****
+    template <typename NodePackT>
+    struct MaxCostNode;
+    template <typename T>
+    struct MaxCostNode<NodePack<Node<T>>>
+    {
+        using type = Node<T>;
+        static constexpr std::size_t cost = NodeCost<Node<T>>::value;
+    };
+    struct NoCriticalNode
+    {
+    };
+    template <>
+    struct MaxCostNode<NodePack<>>
+    {
+        using type = Node<NoCriticalNode>;
+        static constexpr std::size_t cost = 0;
+    };
+    template <typename FirstT, typename SecondT, typename... RestTs>
+    struct MaxCostNode<NodePack<Node<FirstT>, Node<SecondT>, Node<RestTs>...>>
+    {
+      private:
+        using rest_max = typename MaxCostNode<NodePack<Node<SecondT>, Node<RestTs>...>>::type;
+        static constexpr std::size_t first_cost = NodeCost<Node<FirstT>>::value;
+        static constexpr std::size_t rest_cost = NodeCost<rest_max>::value;
+
+      public:
+        using type = std::conditional_t<(first_cost >= rest_cost), Node<FirstT>, rest_max>;
+        static constexpr std::size_t cost = NodeCost<type>::value;
+    };
+
+    template <typename ResultPackT, typename LayerPackT>
+    struct CollectEstimatedCriticalPathImpl;
+
+    template <typename ResultPackT>
+    struct CollectEstimatedCriticalPathImpl<ResultPackT, LayerPack<>>
+    {
+        using type = ResultPackT;
+    };
+    template <typename... ResultNodes, typename FirstLayerT, typename... RestLayers>
+    struct CollectEstimatedCriticalPathImpl<NodePack<ResultNodes...>, LayerPack<FirstLayerT, RestLayers...>>
+    {
+        using max_node = typename MaxCostNode<FirstLayerT>::type;
+
+        using next_result = NodePack<ResultNodes..., max_node>;
+
+        using type = typename CollectEstimatedCriticalPathImpl<next_result, LayerPack<RestLayers...>>::type;
+    };
+
+    template <typename LayerPackT>
+    struct CollectEstimatedCriticalPath;
+    template <typename... Layers>
+    struct CollectEstimatedCriticalPath<LayerPack<Layers...>>
+    {
+        using type = typename CollectEstimatedCriticalPathImpl<NodePack<>, LayerPack<Layers...>>::type;
+    };
+
+    template <typename PlanT>
+    struct AnalyzeEstimatedCriticalPath;
+    template <typename... LayerTs>
+    struct AnalyzeEstimatedCriticalPath<SafeLayeredPlan<LayerPack<LayerTs...>>>
+    {
+        static constexpr std::size_t cost = (LayerCost<LayerTs>::value + ... + 0);
+        using path = typename CollectEstimatedCriticalPath<LayerPack<LayerTs...>>::type;
+        using type = EstimatedCriticalPathAnalysisResult<cost, path>;
+    };
+    template <typename... LayerTs>
+    struct AnalyzeEstimatedCriticalPath<LayeredPlan<LayerPack<LayerTs...>>>
+    {
+        static constexpr std::size_t cost = (LayerCost<LayerTs>::value + ... + 0);
+        using path = typename CollectEstimatedCriticalPath<LayerPack<LayerTs...>>::type;
+        using type = EstimatedCriticalPathAnalysisResult<cost, path>;
+    };
+    template <typename... NodeTs>
+    struct AnalyzeEstimatedCriticalPath<SequentialPlan<NodePack<NodeTs...>>>
+    {
+        static constexpr std::size_t cost = (LayerCost<NodeTs>::value + ... + 0);
+        using path = NodePack<NodeTs...>;
+        using type = EstimatedCriticalPathAnalysisResult<cost, path>;
     };
 } // namespace tsr

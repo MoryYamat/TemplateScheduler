@@ -255,10 +255,18 @@ int main()
     >;
     static_assert(std::is_same_v<CES_Analyze_Resource_Dependencies, Expected_CES_Analyze_Resource_Dependencies>);
     visualizer::PrintResourceDependencyAnalysis<CES_EXE_SET>::Run();
+    // visualizer::PrintResourceDependencyAnalysis<CES_Analyze_Resource_Dependencies>::Run();
+
+    std::cerr <<"\n ======= Cost Analysis =======\n";
+    using CES_cost_result = typename AnalyzeEstimatedCriticalPath<CES_SAFE_LAYERED_PLAN_RF>::type;
+    using Expected_CES_cost_result = EstimatedCriticalPathAnalysisResult<13, NodePack<CES_PROC_N_INTENT, CES_PROC_N_INTEG, CES_PROC_N_COLL, CES_PROC_N_RENDER>>;
+    static_assert(std::is_same_v<CES_cost_result, Expected_CES_cost_result>);
+    // std::cerr << "CES_cost_result = " << typeid(CES_cost_result).name() << "\n";
+    visualizer::PrintEstimatedCriticalPathAnalysis<CES_SAFE_LAYERED_PLAN_RF>::Run();
+
     // std::cerr << "CES_Analyze_Resource_Dependency_Res = \n  " << typeid(CES_Analyze_Resource_Dependencies).name() <<"\n";
     // TODO:
     // 2. Critical path analysis:       Planの中で、並列化しても短縮できない最長経路を見る
-    // 3. Resource dependency analysis: task ではなく resource 側から 見る
     // 5. Diagnostics:                  analysis結果をもとに「問題・改善候補」を出す層
 
     return 0;

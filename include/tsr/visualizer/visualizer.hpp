@@ -20,6 +20,14 @@ namespace tsr::visualizer
             return typeid(T).name();
         }
     };
+    template <typename T>
+    struct TypeName<Node<T>>
+    {
+        static const char* Get()
+        {
+            return typeid(T).name();
+        }
+    };
 
     template <typename NodeT>
     struct PrintNode;
@@ -240,27 +248,26 @@ namespace tsr::visualizer
         }
     };
 
-    template<typename... NodeTs>
+    template <typename... NodeTs>
     struct PrintNodes
     {
         static void Run(std::ostream& os = std::cerr)
         {
-            ((os << "      " << typeid(NodeTs).name() << "\n"), ...);
+            ((os << "      " << TypeName<NodeTs>::Get() << "\n"), ...);
         }
     };
-    template<typename... Ts>
+    template <typename... Ts>
     struct PrintNodes<Node<Ts>...>
     {
         static void Run(std::ostream& os = std::cerr)
         {
-            ((os << "      " << typeid(Ts).name() << "\n"), ...);
+            ((os << "      " << TypeName<Ts>::Get() << "\n"), ...);
         }
     };
-    
 
-    template<typename T>
+    template <typename T>
     struct PrintResourceDependency;
-    template<typename ResourceT, typename... ReaderNodeTs,typename... WriterNodeTs>
+    template <typename ResourceT, typename... ReaderNodeTs, typename... WriterNodeTs>
     struct PrintResourceDependency<ResourceDependency<ResourceT, NodePack<ReaderNodeTs...>, NodePack<WriterNodeTs...>>>
     {
         static void Run(std::ostream& os = std::cerr)
@@ -274,9 +281,9 @@ namespace tsr::visualizer
         }
     };
 
-    template<typename DependencyPackT>
+    template <typename DependencyPackT>
     struct PrintAllResourceDependency;
-    template<typename... DependenciesT>
+    template <typename... DependenciesT>
     struct PrintAllResourceDependency<ResourceDependencyAnalysisResult<DependenciesT...>>
     {
         static void Run(std::ostream& os = std::cerr)
@@ -290,7 +297,7 @@ namespace tsr::visualizer
     template <typename... NodeTs>
     struct PrintResourceDependencyAnalysis<ExecutionSet<NodeTs...>>
     {
-        static void Run(std::ostream& os = std::cerr) 
+        static void Run(std::ostream& os = std::cerr)
         {
             using dependencies = typename AnalyzeResourceDependencies<ExecutionSet<NodeTs...>>::type;
 
@@ -301,46 +308,37 @@ namespace tsr::visualizer
     template <typename... ResourceDependencies>
     struct PrintResourceDependencyAnalysis<ResourceDependencyAnalysisResult<ResourceDependencies...>>
     {
-        static void Run(std::ostream& os = std::cerr) 
+        static void Run(std::ostream& os = std::cerr)
         {
             os << "ResourceDependencyAnalysis: \n";
             PrintAllResourceDependency<ResourceDependencyAnalysisResult<ResourceDependencies...>>::Run(os);
         }
     };
+
+    template <typename T>
+    struct PrintEstimatedCriticalPathAnalysis;
+    template <std::size_t Cost, typename... NodeTs>
+    struct PrintEstimatedCriticalPathAnalysis<EstimatedCriticalPathAnalysisResult<Cost, NodePack<NodeTs...>>>
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            os << "EstimatedCriticalPathAnalysis:\n";
+
+            os << "  critical_path_cost: " << Cost << "\n";
+
+            os << "  critical_path:\n";
+
+            PrintNodePack<NodePack<NodeTs...>>::Run(os, 4);
+        }
+    };
+    template <typename PlanT>
+    struct PrintEstimatedCriticalPathAnalysis
+    {
+        static void Run(std::ostream& os = std::cerr)
+        {
+            using result = typename AnalyzeEstimatedCriticalPath<PlanT>::type;
+
+            PrintEstimatedCriticalPathAnalysis<result>::Run(os);
+        }
+    };
 } // namespace tsr::visualizer
-// sequential plan
-
-// Sequential Plan
-// [0]A
-// [1]B
-// [2]C
-// ....
-
-// Layered Plan
-// Layer 0:
-//      A
-//      B
-// Layer 1:
-//      C
-// ...
-
-// SafeLayeredPlan
-// SafeLayer  0
-//      A
-//      B
-// barrier
-// SafeLayer  1
-//      C
-
-// HierarchicalPlan
-// MetaPlan:
-//      GraphA
-//      GraphB
-// ...
-// SubPlan
-//      Sequential: GraphA
-//          A0
-//          A1
-//      Sequential: GraphB
-//          B0
-//          ...

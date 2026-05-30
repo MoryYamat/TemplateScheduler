@@ -224,10 +224,30 @@ struct Executor<B>
 Parallel safety contract:
 - Effects<T> may over-approximate, but must not under-approximate,
 - the shared mutable state accessed by T.
-
+- safety is conditional on correct Effects<T> declarations
 
 ## Create a conflict-safe layered execution plan from an access effect system
+To calculate the order in which parallel execution is possible from AccessEffectSystem,  
+the following specialization of type `Effects<T>` is required.
 ```cpp
+// dsl_effects_def.hpp
+#include "tsr/effects/effect.hpp
+
+template<>
+struct Effects<UserTask>
+{
+    // Enumerate the data types that Task reads and writes.
+    using reads = ResourcePack<...>;
+    using writes = ResourcePack<...>;
+};
+```
+
+Creating a plan requires three resources: user_type, dsl_type_def, and dsl.
+```cpp
+#include "dsl_effects_def.hpp"
+#include "user_type.hpp"
+#include "tsr/plan/plan.hpp"
+
 using exe_set = ExecutionSet<Node<user_type_A>,Node<user_type_B>,Node<user_type_C>,...>;
 
 using plan = typename MakeSafeLayeredPlan<exe_set, WarnExecutionConfig>::type;
@@ -274,6 +294,12 @@ visualizer::PrintPlanStats<Plan>::Run();
 
 // Output parallel execution plan statistics to standard input/output.
 visualizer::PrintParallelismAnalysis<Plan>::Run();
+
+// The results of AnalyzeConflicts are output to standard input/output based on the ExecutionSet.
+visualizer::PrintConflictAnalysis<ExecutionSet>::Run();
+
+// Output the results of ResourceDependencyAnalysis based on ExecutionSet to standard input/output.
+visualizer::PrintResourceDependencyAnalysis<ExecutionSet>::Run();
 ```
 
 It can be used with all plans.
@@ -288,6 +314,10 @@ The default argument for `PrintPlan::Run()` is `std::cerr`. `std::cout` and `std
 ## Validations
 hard validation
 
+```cpp
+// Verify that the nodes included in SafeLayeredPlan are unique.
+ValidatePlanNodesUnique<Plan>::value
+```
 
 ## Analysis
 ```

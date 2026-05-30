@@ -3,6 +3,7 @@
 #include "user_components.hpp"
 #include "user_effects.hpp"
 #include "tsr/effects/effect.hpp"
+#include "tsr/analysis/costs.hpp"
 
 namespace tsr
 {
@@ -39,6 +40,37 @@ namespace tsr
     {
         using reads = ResourcePack<es::Position>;
         using writes = ResourcePack<es::Camera>;
+    };
+
+    // **** cost **** 
+        template<>
+    struct DeclaredCost<es::Integrate>
+    {
+        static constexpr std::size_t value = 1;
+    };
+
+    template<>
+    struct DeclaredCost<es::CollisionDetection>
+    {
+        static constexpr std::size_t value = 2;
+    };
+
+    template<>
+    struct DeclaredCost<es::Renderer>
+    {
+        static constexpr std::size_t value = 8;
+    };
+
+    template<>
+    struct DeclaredCost<es::IntentSystem>
+    {
+        static constexpr std::size_t value = 2;
+    };
+
+    template<>
+    struct DeclaredCost<es::CameraController>
+    {
+        static constexpr std::size_t value = 2;
     };
 
     // test for duplicate in reads/writes detection
