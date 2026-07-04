@@ -1,5 +1,6 @@
-# Type-level semantic compiler infrastructure
-A non-invasive type-level semantic IR framework for projecting existing C++ types into analyzable compile-time representations.
+# Template Scheduler
+Non-invasively project existing C++ types as a compile-time graph  
+and compute—at compile time—a plan for safe parallel execution.
 
 existing types as semantics
 
