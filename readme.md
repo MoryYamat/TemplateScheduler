@@ -1,10 +1,34 @@
 # Template Scheduler
-Non-invasively project existing C++ types as a compile-time graph  
-and compute—at compile time—a plan for safe parallel execution.
 
-existing types as semantics
+| [Engilish](readme.md) | [日本語](readme.ja.md) |
 
-**semantic graph verifier / planner**
+
+Template Scheduler is a non-invasive C++ type-level graph framework for compile-time analysis and execution-plan synthesis.
+
+Its primary use case is compile-time scheduling of ECS systems based on dependency and resource-access constraints.
+
+The library can:
+
+project existing C++ types into a canonical graph representation
+validate structural and semantic constraints
+analyze read/write conflicts
+generate sequential or conflict-safe layered execution plans
+execute generated plans through user-defined executors and thread-pool adapters
+Primary Use Case: ECS System Scheduling
+
+Template Scheduler models systems and resource access at the type level, allowing execution order and parallel safety to be analyzed before runtime.
+
+Experimental Applications
+
+The same graph and interpretation pipeline can also be used to express architectural constraints beyond execution order.
+
+One experimental use case explores how machine-readable structure can help humans, coding agents, and runtime systems share architectural intent.
+
+See:
+
+[Verification of the Effectiveness of the TSR (TemplateScheduler) Library Using CODEX](https://github.com/MoryYamat/codex_tsr_demo)  
+(Link to another GitHub repository)
+
 
 ## Key Idea
 ```
