@@ -1,10 +1,12 @@
 build
 
 # my my memo
-notes/
+notes/**/*.md
 Irrelevant_Notes.md
 consideration.md
 idea.md
 TODO.md
+
+!notes/ownership/exp_results.md
 
 sandbox/**/build
